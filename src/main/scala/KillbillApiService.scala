@@ -16,16 +16,6 @@ class KillbillApiServiceActor extends Actor with KillbillApiService {
 trait KillbillApiService extends HttpService {
   val killbillApiRoute =
     pathPrefix("api") {
-//      path("ElevationService" / DoubleNumber / DoubleNumber) { (long, lat) =>
-//        requestContext =>
-//          val elevationService = actorRefFactory.actorOf(Props(new ElevationService(requestContext)))
-//          elevationService ! ElevationService.Process(long, lat)
-//      } ~
-//      path("TimezoneService" / DoubleNumber / DoubleNumber / Segment) { (long, lat, timestamp) =>
-//        requestContext =>  
-//          val timezoneService = actorRefFactory.actorOf(Props(new TimezoneService(requestContext)))
-//          timezoneService ! TimezoneService.Process(long, lat, timestamp)
-//      }
       path("AccountService" / Rest) { (externalKey) =>
         requestContext =>
           val accountService = actorRefFactory.actorOf(Props(new AccountService(requestContext)))

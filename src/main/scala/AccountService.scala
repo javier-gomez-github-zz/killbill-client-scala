@@ -28,7 +28,7 @@ class AccountService(requestContext: RequestContext) extends Actor {
 
   def process(externalKey: String) = {
 
-    log.info("Requesting Account with externalKey:: {}", externalKey)
+    log.info("Requesting Account with externalKey: {}", externalKey)
 
     import AccountJsonProtocol._
     import SprayJsonSupport._
@@ -38,7 +38,7 @@ class AccountService(requestContext: RequestContext) extends Actor {
     val responseFuture = pipeline {
       Get(s"http://localhost:8080/1.0/kb/accounts?externalKey=$externalKey&accountWithBalance=false&accountWithBalanceAndCBA=false&audit=NONE") ~> addHeader("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=") ~> addHeader("X-Killbill-CreatedBy", "admin") ~> addHeader("X-Killbill-ApiKey", "hootsuite") ~> addHeader("X-Killbill-ApiSecret", "hootsuite")
     }
-    responseFuture onComplete {
+    responseFuture.onComplete {
       case Success(KillbillApiResult(accountId, externalKey, accountCBA, accountBalance, name,
       firstNameLength, email, billCycleDayLocal, currency, paymentMethodId, timeZone,
       address1, address2, postalCode, company, city, state, country, locale, phone,
