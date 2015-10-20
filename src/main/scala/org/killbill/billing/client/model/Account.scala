@@ -1,6 +1,6 @@
-package org.killbill.api.client.scala
+package org.killbill.billing.client.model
 
-import spray.json.{ JsonFormat, DefaultJsonProtocol }
+import spray.json.{DefaultJsonProtocol, JsonFormat}
 
 case class Account(
   accountId: Option[String],
