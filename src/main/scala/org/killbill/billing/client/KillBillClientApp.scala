@@ -1,10 +1,10 @@
-package org.killbill.billing.client
+package org.killbill.billing.client.actor
 
 import akka.actor.{ActorSystem, Props}
 import akka.event.Logging
 import akka.pattern.ask
 import akka.util.Timeout
-import org.killbill.billing.client.AccountActor.{CreateAccount, GetAccountByExternalKey}
+import org.killbill.billing.client.actor.AccountActor.{CreateAccount, GetAccountByExternalKey}
 import org.killbill.billing.client.model.Account
 import spray.http.{BasicHttpCredentials, HttpHeaders, _}
 
@@ -37,15 +37,15 @@ object KillBillClientApp extends App {
   val log = Logging(system, getClass)
 
   // Public methods to connect to the KillBill API
-  def getAccountByExternalKey(externalKey: String, withBalance: Boolean = false, withCBA: Boolean = false, audit: String = "NONE"): Account = {
+  def getAccountByExternalKey(externalKey: String, withBalance: Boolean = false, withCBA: Boolean = false, audit: String = "NONE"): Any = {
     val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
     implicit val timeout = Timeout(10 seconds)
-    val future: Future[Account] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Account]
+    val future: Future[Any] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Any]
     Await.result(future, timeout.duration)
   }
 
   // Test method to validate the getAccountByExternalKey functionality
-//  val account = getAccountByExternalKey("jgomez")
+//  val account = getAccountByExternalKey("jgomez1")
 //  println(s"Got the Account information: $account")
 
   def createAccount(account: Account): String = {

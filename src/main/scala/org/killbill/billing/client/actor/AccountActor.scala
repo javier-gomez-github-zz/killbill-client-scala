@@ -1,14 +1,12 @@
-package org.killbill.billing.client
+package org.killbill.billing.client.actor
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import org.killbill.billing.client.model.{Account, AccountJsonProtocol, KillbillApiResult}
 import spray.client.pipelining._
 import spray.http.HttpHeader
 import spray.httpx.SprayJsonSupport
-import spray.routing.RequestContext
 
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object AccountActor {
