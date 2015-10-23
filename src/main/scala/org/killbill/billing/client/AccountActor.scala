@@ -31,9 +31,9 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
       context.stop(self)
     }
 
-//    case CreateAccount(account) =>
-//      createAccount(account)
-//      context.stop(self)
+    case CreateAccount(account) =>
+      createAccount(sender, account)
+      context.stop(self)
   }
 
   def getAccountByExternalKey(originalSender: ActorRef, externalKey: String, withBalance: Boolean, withCBA: Boolean, audit: String) = {
@@ -42,7 +42,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[Account]
+    val pipeline = sendReceive ~> unmarshal[KillbillApiResult[Account]]
 
     val suffixUrl = "&accountWithBalance=" + withBalance.toString + "&accountWithBalanceAndCBA=" + withCBA.toString + "&audit=" + audit
 
@@ -57,27 +57,34 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
           response.locale, response.phone, response.isMigrated, response.isNotifiedForInvoices)
         originalSender ! account
       case Failure(error) =>
-        println("")
+        originalSender ! error.getMessage
     }
   }
 
-//  def createAccount(account: Account) = {
-//
-//    log.info("Creating new Account...")
-//
-//    import AccountJsonProtocol._
-//    import SprayJsonSupport._
-//
-//    val pipeline = sendReceive
-//
-//    val responseFuture = pipeline {
-//      Post(killBillUrl+s"/accounts", account) ~> addHeaders(headers)
-//    }
-//    responseFuture.onComplete {
-//      case Success(response) =>
-//        requestContext.complete(response)
-//      case Failure(error) =>
-//        requestContext.complete(error.getMessage())
-//    }
-//  }
+  def createAccount(originalSender: ActorRef, account: Account) = {
+
+    log.info("Creating new Account...")
+
+    import AccountJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/accounts", account) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().equalsIgnoreCase("201")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
 }

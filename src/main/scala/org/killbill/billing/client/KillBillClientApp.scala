@@ -1,19 +1,15 @@
 package org.killbill.billing.client
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ActorSystem, Props}
 import akka.event.Logging
-import akka.util.Timeout
 import akka.pattern.ask
-import org.killbill.billing.client.AccountActor.GetAccountByExternalKey
-import org.killbill.billing.client.model.{KillbillApiResult, Account}
-import org.killbill.billing.client.model.AccountJsonProtocol._
-import spray.client.pipelining._
-import spray.http._
-import spray.httpx.SprayJsonSupport._
+import akka.util.Timeout
+import org.killbill.billing.client.AccountActor.{CreateAccount, GetAccountByExternalKey}
+import org.killbill.billing.client.model.Account
+import spray.http.{BasicHttpCredentials, HttpHeaders, _}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
 
 /**
   * Created by jgomez on 20/10/2015.
@@ -36,44 +32,36 @@ object KillBillClientApp extends App {
     headers = newHeaders
   }
 
-//  val timeout = 5.seconds
-
   // create the system and actor
   val system = ActorSystem("killbill-api-scala-service")
   val log = Logging(system, getClass)
-  import system.dispatcher
-
-  // the dispatcher member of the variable system will be available in the scope
 
   // Public methods to connect to the KillBill API
   def getAccountByExternalKey(externalKey: String, withBalance: Boolean = false, withCBA: Boolean = false, audit: String = "NONE"): Account = {
-
     val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
     implicit val timeout = Timeout(10 seconds)
     val future: Future[Account] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Account]
-    val result = Await.result(future, timeout.duration)
-    //TODO: why is adding a Some(value) in the JSON? Check JSON unmarshaller!
-    result
-
-//    val suffixUrl = "&accountWithBalance=" + withBalance.toString + "&accountWithBalanceAndCBA=" + withCBA.toString + "&audit=" + audit
-//
-//    val pipeline: HttpRequest => Future[Account] = sendReceive ~> unmarshal[Account]
-//    val f: Future[Account] = pipeline {
-//      Get(killBillUrl+s"/accounts?externalKey=$externalKey"+suffixUrl) ~> addHeaders(headers)
-//    }
-//    f.onComplete {
-//      case Success(response) =>
-//        println("Got Account information for externalKey=" + response.externalKey)
-//      case Failure(error) =>
-//        println(error.getMessage())
-//    }
-//    Await.result(f, timeout)
+    Await.result(future, timeout.duration)
   }
 
-  // Test method to validate that the functionality is working as expected (must be deleted)
-  val account = getAccountByExternalKey("jgomez")
-  println(s"Got the Account information: $account")
+  // Test method to validate the getAccountByExternalKey functionality
+//  val account = getAccountByExternalKey("jgomez")
+//  println(s"Got the Account information: $account")
 
-  // Shutdown the app
-  system.shutdown()
+  def createAccount(account: Account): String = {
+    val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
+    implicit val timeout = Timeout(20 seconds)
+    val future: Future[String] = ask(accountActor, CreateAccount(account)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  // Test method to validate the createAccount functionality
+  //  val account = Account.apply(None, Option.apply("kbanman"), None, None, Option.apply("Kelly Banman"), None, Option.apply("kbanman@velocitypartners.net"), None, Option.apply("USD"), None, Option.apply("UTC"), None, None, None, None, None, None, None, None, None, None, None)
+  //  val response: String = createAccount(account.asInstanceOf[Account])
+  //  if (response.contains("201")) {
+  //    println(s"Account created succesfully")
+  //  }
+  //  else {
+  //    println(s"An error occurred. Message: " + response)
+  //  }
 }
