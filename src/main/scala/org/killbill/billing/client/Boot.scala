@@ -10,7 +10,7 @@ import spray.can.Http
 /**
  * Created by jgomez on 20/10/2015.
  */
-object Boot extends App {
+object Boot {
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("killbill-api-scala-service")

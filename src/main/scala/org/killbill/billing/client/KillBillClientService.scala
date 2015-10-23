@@ -9,7 +9,11 @@ class KillBillClientServiceActor extends Actor with KillBillClientService {
   
   def actorRefFactory = context
 
-  def receive = runRoute(killBillClientRoute)
+  def receive = {
+    case "test" =>
+      println("something")
+//    runRoute(killBillClientRoute)
+  }
 
 }
 
@@ -26,23 +30,23 @@ trait KillBillClientService extends HttpService {
     HttpHeaders.RawHeader.apply("X-Killbill-ApiSecret", "hootsuite")
   )
 
-  val killBillClientRoute =
-    pathPrefix("api") {
-      get {
-        path("getAccount" / Segment / Segment / Segment / Segment) { (externalKey, withBalance, withCBA, audit) =>
-          requestContext =>
-            val accountService = actorRefFactory.actorOf(Props(new AccountService(requestContext, killbillUrl, headers)))
-            accountService ! AccountService.GetAccountByExternalKey(externalKey, withBalance.toBoolean, withCBA.toBoolean, audit)
-        }
-      } ~
-      post {
-        path("createAccount") {
-          entity(as[Account]) { account =>
-            requestContext =>
-              val accountService = actorRefFactory.actorOf(Props(new AccountService(requestContext, killbillUrl, headers)))
-              accountService ! AccountService.CreateAccount(account)
-          }
-        }
-      }
-    }
+//  val killBillClientRoute =
+//    pathPrefix("api") {
+//      get {
+//        path("getAccount" / Segment / Segment / Segment / Segment) { (externalKey, withBalance, withCBA, audit) =>
+//          requestContext =>
+//            val accountService = actorRefFactory.actorOf(Props(new AccountActor(requestContext, killbillUrl, headers)))
+//            accountService ! AccountActor.GetAccountByExternalKey(externalKey, withBalance.toBoolean, withCBA.toBoolean, audit)
+//        }
+//      } ~
+//      post {
+//        path("createAccount") {
+//          entity(as[Account]) { account =>
+//            requestContext =>
+//              val accountService = actorRefFactory.actorOf(Props(new AccountActor(requestContext, killbillUrl, headers)))
+//              accountService ! AccountActor.CreateAccount(account)
+//          }
+//        }
+//      }
+//    }
 }
