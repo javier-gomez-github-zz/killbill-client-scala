@@ -35,12 +35,12 @@ object KillBillClientApp extends App {
   // create the system and actor
   val system = ActorSystem("killbill-api-scala-service")
   val log = Logging(system, getClass)
+  val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
 
   // Public methods to connect to the KillBill API
   def getAccountByExternalKey(externalKey: String, withBalance: Boolean = false, withCBA: Boolean = false, audit: String = "NONE"): Any = {
-    val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
     implicit val timeout = Timeout(10 seconds)
-    val future: Future[Any] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Any]
+    val future: Future[Any] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Future[Any]]
     Await.result(future, timeout.duration)
   }
 
@@ -49,7 +49,6 @@ object KillBillClientApp extends App {
 //  println(s"Got the Account information: $account")
 
   def createAccount(account: Account): String = {
-    val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
     implicit val timeout = Timeout(20 seconds)
     val future: Future[String] = ask(accountActor, CreateAccount(account)).mapTo[String]
     Await.result(future, timeout.duration)
