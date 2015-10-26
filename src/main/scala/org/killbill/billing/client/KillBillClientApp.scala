@@ -32,35 +32,36 @@ object KillBillClientApp extends App {
     headers = newHeaders
   }
 
-  // create the system and actor
-  val system = ActorSystem("killbill-api-scala-service")
+  // create the system, log and other shared features
+  val system = ActorSystem("killbill-api-scala-client")
   val log = Logging(system, getClass)
+  implicit val timeout = Timeout(10 seconds)
+
+  // create the actors
   val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
 
   // Public methods to connect to the KillBill API
   def getAccountByExternalKey(externalKey: String, withBalance: Boolean = false, withCBA: Boolean = false, audit: String = "NONE"): Any = {
-    implicit val timeout = Timeout(10 seconds)
-    val future: Future[Any] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Future[Any]]
+    val future: Future[Any] = ask(accountActor, GetAccountByExternalKey(externalKey, withBalance, withCBA, audit)).mapTo[Any]
     Await.result(future, timeout.duration)
   }
 
   // Test method to validate the getAccountByExternalKey functionality
-//  val account = getAccountByExternalKey("jgomez1")
+//  val account = getAccountByExternalKey("jgomez")
 //  println(s"Got the Account information: $account")
 
   def createAccount(account: Account): String = {
-    implicit val timeout = Timeout(20 seconds)
     val future: Future[String] = ask(accountActor, CreateAccount(account)).mapTo[String]
     Await.result(future, timeout.duration)
   }
 
   // Test method to validate the createAccount functionality
-  //  val account = Account.apply(None, Option.apply("kbanman"), None, None, Option.apply("Kelly Banman"), None, Option.apply("kbanman@velocitypartners.net"), None, Option.apply("USD"), None, Option.apply("UTC"), None, None, None, None, None, None, None, None, None, None, None)
-  //  val response: String = createAccount(account.asInstanceOf[Account])
-  //  if (response.contains("201")) {
-  //    println(s"Account created succesfully")
-  //  }
-  //  else {
-  //    println(s"An error occurred. Message: " + response)
-  //  }
+//  val account = Account.apply(None, Option.apply("kbanman"), None, None, Option.apply("Kelly Banman"), None, Option.apply("kbanman@velocitypartners.net"), None, Option.apply("USD"), None, Option.apply("UTC"), None, None, None, None, None, None, None, None, None, None, None)
+//  val response: String = createAccount(account.asInstanceOf[Account])
+//  if (response.contains("201")) {
+//    println(s"Account created succesfully")
+//  }
+//  else {
+//    println(s"An error occurred. Message: " + response)
+//  }
 }

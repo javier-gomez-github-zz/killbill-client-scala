@@ -73,7 +73,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     }
     responseFuture.onComplete {
       case Success(response) => {
-        if (!response.status.toString().equalsIgnoreCase("201")) {
+        if (!response.status.toString().contains("201")) {
           originalSender ! response.entity.asString
         }
         else {
