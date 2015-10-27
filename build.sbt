@@ -1,4 +1,6 @@
-name := "KillbillApiClientScala"
+organization := "org.killbill"
+
+name := "killbill-api-client-scala"
 
 version := "0.1"
 
@@ -23,10 +25,8 @@ libraryDependencies ++= {
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
   "ch.qos.logback" % "logback-classic" % "1.0.12",
-  "org.scalatest" %% "scalatest" % "2.0.M7" % "test"
+  "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
   )
 }
 
-seq(Revolver.settings: _*)
-
-atmosSettings
+exportJars := true
