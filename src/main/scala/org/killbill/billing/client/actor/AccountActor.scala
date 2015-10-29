@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
-import org.killbill.billing.client.model.{Account, AccountJsonProtocol, KillbillApiResult}
+import org.killbill.billing.client.model._
 import spray.client.pipelining._
 import spray.http.HttpHeader
 import spray.httpx.SprayJsonSupport
@@ -15,8 +15,15 @@ object AccountActor {
   case class GetAccountByExternalKey(externalKey: String, withBalance: Boolean, withCBA: Boolean, audit: String)
   case class GetAccountById(accountId: UUID, withBalance: Boolean, withCBA: Boolean, audit: String)
   case class CreateAccount(account: Account)
+  case class UpdateAccount(account: Account, accountId: UUID)
   case class GetAccounts(offset: Long, limit: Long, auditMode: String)
   case class SearchAccounts(searchKey: String, offset: Long, limit: Long, auditMode: String)
+  case class GetEmailsForAccount(accountId: UUID)
+  case class AddEmailToAccount(accountEmail: AccountEmail, accountId: UUID)
+  case class RemoveEmailFromAccount(accountId: UUID, email: String)
+  case class GetEmailNotificationsForAccount(accountId: UUID)
+  case class UpdateEmailNotificationsForAccount(invoiceEmail: InvoiceEmail, accountId: UUID)
+  case class GetAccountTimeline(accountId: UUID, audit: String)
 }
 
 class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor {
@@ -43,6 +50,10 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
       createAccount(sender, account)
       context.stop(self)
 
+    case UpdateAccount(account, accountId) =>
+      updateAccount(sender, account, accountId)
+      context.stop(self)
+
     case GetAccounts(offset, limit, auditLevel) => {
       getAccounts(sender, offset, limit, auditLevel)
       context.stop(self)
@@ -52,6 +63,82 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
       searchAccounts(sender, searchKey, offset, limit, auditLevel)
       context.stop(self)
     }
+
+    case GetEmailsForAccount(accountId) => {
+      getEmailsForAccount(sender, accountId)
+      context.stop(self)
+    }
+
+    case AddEmailToAccount(accountEmail, accountId) => {
+      addEmailToAccount(sender, accountEmail, accountId)
+      context.stop(self)
+    }
+
+    case RemoveEmailFromAccount(accountId, email) => {
+      removeEmailFromAccount(sender, accountId, email)
+      context.stop(self)
+    }
+
+    case GetEmailNotificationsForAccount(accountId) => {
+      getEmailNotificationsForAccount(sender, accountId)
+      context.stop(self)
+    }
+
+    case UpdateEmailNotificationsForAccount(invoiceEmail, accountId) => {
+      updateEmailNotificationsForAccount(sender, invoiceEmail, accountId)
+      context.stop(self)
+    }
+
+
+    case GetAccountTimeline(accountId: UUID, audit: String) => {
+      getAccountTimeline(sender, accountId, audit)
+      context.stop(self)
+    }
+  }
+
+  def getEmailNotificationsForAccount(originalSender: ActorRef, accountId: UUID) = {
+    log.info("Requesting Email Notifications for Account ID: " + accountId.toString)
+
+    import InvoiceEmailJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive ~> unmarshal[InvoiceEmailResult[InvoiceEmail]]
+
+    val responseFuture = pipeline {
+      Get(killBillUrl+s"/accounts/$accountId/emailNotifications") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        originalSender ! response
+      case Failure(error) =>
+        originalSender ! error.getMessage
+    }
+  }
+
+  def updateEmailNotificationsForAccount(originalSender: ActorRef, invoiceEmail: InvoiceEmail, accountId: UUID) = {
+    log.info("Updating Email Notifications For Account " + accountId)
+
+    import InvoiceEmailJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Put(killBillUrl+s"/accounts/$accountId/emailNotifications", invoiceEmail) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
   }
 
   def searchAccounts(originalSender: ActorRef, searchKey: String, offset: Long, limit: Long, auditLevel: String) = {
@@ -60,7 +147,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[KillbillApiResult[Account]]]
+    val pipeline = sendReceive ~> unmarshal[List[AccountResult[Account]]]
 
     val suffixUrl = "&accountWithBalance=false&accountWithBalanceAndCBA=false&audit=" + auditLevel
 
@@ -75,13 +162,81 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     }
   }
 
+  def getEmailsForAccount(originalSender: ActorRef, accountId: UUID) = {
+    log.info("Requesting Emails for Account ID: " + accountId.toString)
+
+    import AccountEmailJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive ~> unmarshal[List[AccountEmailResult[AccountEmail]]]
+
+    val responseFuture = pipeline {
+      Get(killBillUrl+s"/accounts/$accountId/emails") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        originalSender ! response
+      case Failure(error) =>
+        originalSender ! error.getMessage
+    }
+  }
+
+  def addEmailToAccount(originalSender: ActorRef, accountEmail: AccountEmail, accountId: UUID) = {
+    log.info("Adding new Email to Account " + accountId.toString)
+
+    import AccountEmailJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/accounts/$accountId/emails", accountEmail) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("201")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def removeEmailFromAccount(originalSender: ActorRef, accountId: UUID, email: String) = {
+    log.info("Deleting Email " + email + " from Account " + accountId.toString)
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Delete(killBillUrl+s"/accounts/$accountId/emails/$email") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
   def getAccounts(originalSender: ActorRef, offset: Long, limit: Long, auditLevel: String) = {
     log.info("Requesting All Accounts")
 
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[KillbillApiResult[Account]]]
+    val pipeline = sendReceive ~> unmarshal[List[AccountResult[Account]]]
 
     val suffixUrl = "&accountWithBalance=false&accountWithBalanceAndCBA=false&audit=" + auditLevel
 
@@ -102,7 +257,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[KillbillApiResult[Account]]
+    val pipeline = sendReceive ~> unmarshal[AccountResult[Account]]
 
     val suffixUrl = "?accountWithBalance=" + withBalance.toString + "&accountWithBalanceAndCBA=" + withCBA.toString + "&audit=" + audit
 
@@ -127,7 +282,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[KillbillApiResult[Account]]
+    val pipeline = sendReceive ~> unmarshal[AccountResult[Account]]
 
     val suffixUrl = "&accountWithBalance=" + withBalance.toString + "&accountWithBalanceAndCBA=" + withCBA.toString + "&audit=" + audit
 
@@ -169,6 +324,54 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
       case Failure(error) => {
         originalSender ! error.getMessage()
       }
+    }
+  }
+
+  def updateAccount(originalSender: ActorRef, account: Account, accountId: UUID) = {
+    log.info("Updating Account..." + account.externalKey)
+
+    import AccountJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Put(killBillUrl+s"/accounts/$accountId", account) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def getAccountTimeline(originalSender: ActorRef, accountId: UUID, audit: String) = {
+    log.info("Requesting Account Timeline for Account with ID: {}", accountId.toString)
+
+    import AccountTimelineJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive ~> unmarshal[AccountTimelineResult[AccountTimeline]]
+
+    val suffixUrl = "?audit=" + audit + "&parallel=false"
+
+    val responseFuture = pipeline {
+      Get(killBillUrl+s"/accounts/$accountId/timeline" + suffixUrl) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        val accountTimeline = new AccountTimeline(response.account, response.bundles, response.invoices, response.payments)
+        originalSender ! accountTimeline
+      case Failure(error) =>
+        originalSender ! error.getMessage
     }
   }
 }

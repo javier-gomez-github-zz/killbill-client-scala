@@ -27,7 +27,7 @@ case class Account(
   isNotifiedForInvoices: Option[Boolean]
 )
 
-case class KillbillApiResult[T](
+case class AccountResult[T](
   accountId: Option[String],
   externalKey: Option[String],
   accountCBA: Option[BigDecimal],
@@ -54,5 +54,5 @@ case class KillbillApiResult[T](
 
 object AccountJsonProtocol extends DefaultJsonProtocol {
   implicit val accountFormat = jsonFormat22(Account)
-  implicit def killbillApiResultFormat[T :JsonFormat] = jsonFormat22(KillbillApiResult.apply[T])
+  implicit def accountResultFormat[T :JsonFormat] = jsonFormat22(AccountResult.apply[T])
 }
