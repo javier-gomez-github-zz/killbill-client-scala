@@ -7,7 +7,8 @@ import akka.event.Logging
 import akka.pattern.ask
 import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
-import org.killbill.billing.client.model.{Account, AccountEmail, InvoiceEmail}
+import org.killbill.billing.client.actor.TagDefinitionActor._
+import org.killbill.billing.client.model.{TagDefinition, Account, AccountEmail, InvoiceEmail}
 import spray.http._
 
 import scala.concurrent.duration._
@@ -25,8 +26,34 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
 
   // create the actors
   val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
+  val tagDefinitionActor = system.actorOf(Props(new TagDefinitionActor(killBillUrl, headers)), name = "TagDefinitionActor")
 
-  // Public methods to connect to the KillBill API
+  /**
+  Public methods to connect to the KillBill API
+   */
+
+  // Tag Definitions
+  def getTagDefinitions(auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(tagDefinitionActor, GetTagDefinitions(auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getTagDefinition(tagDefinitionId: UUID, auditLevel: String = "NONE"): Any = {
+    val future: Future[Any] = ask(tagDefinitionActor, GetTagDefinition(tagDefinitionId, auditLevel)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def createTagDefinition(tagDefinition: TagDefinition): String = {
+    val future: Future[String] = ask(tagDefinitionActor, CreateTagDefinition(tagDefinition)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def deleteTagDefinition(tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagDefinitionActor, DeleteTagDefinition(tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  // Accounts
 
   def getEmailNotificationsForAccount(accountId: UUID) = {
     val future: Future[Any] = ask(accountActor, GetEmailNotificationsForAccount(accountId)).mapTo[Any]
