@@ -41,12 +41,12 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     }
       
     case GetBundleByExternalKey(externalKey) => {
-        getBundleByExternalKey(sender, externalKey)
+      getBundleByExternalKey(sender, externalKey)
       context.stop(self)
     }
 
     case GetBundleById(bundleId) => {
-        getBundleById(sender, bundleId)
+      getBundleById(sender, bundleId)
       context.stop(self)
     }
 

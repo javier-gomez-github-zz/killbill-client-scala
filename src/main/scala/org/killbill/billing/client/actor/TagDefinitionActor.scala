@@ -138,6 +138,4 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
       }
     }
   }
-
-
 }

@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
+import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
 import org.killbill.billing.client.model.BillingActionPolicy.BillingActionPolicy
 import org.killbill.billing.client.model._
@@ -30,11 +31,39 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
   val tagDefinitionActor = system.actorOf(Props(new TagDefinitionActor(killBillUrl, headers)), name = "TagDefinitionActor")
   val bundleActor = system.actorOf(Props(new BundleActor(killBillUrl, headers)), name = "BundleActor")
+  val subscriptionActor = system.actorOf(Props(new SubscriptionActor(killBillUrl, headers)), name = "SubscriptionActor")
 
   /**
   Public methods to connect to the KillBill API
    */
 
+  // Subscriptions
+
+  def unCancelSubscription(subscriptionId: UUID): String = {
+    val future: Future[String] = ask(subscriptionActor, UnCancelSubscription(subscriptionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def cancelSubscription(subscriptionId: UUID): String = {
+    val future: Future[String] = ask(subscriptionActor, CancelSubscription(subscriptionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createSubscription(subscription: Subscription): String = {
+    val future: Future[String] = ask(subscriptionActor, CreateSubscription(subscription)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getSubscriptionById(subscriptionId: UUID): Any = {
+    val future: Future[Any] = ask(subscriptionActor, GetSubscriptionById(subscriptionId)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def updateSubscription(subscription: Subscription, subscriptionId: UUID): String = {
+    val future: Future[String] = ask(subscriptionActor, UpdateSubscription(subscription, subscriptionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+  
   // Bundles
   def getBundles(offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
     val future: Future[List[Any]] = ask(bundleActor, GetBundles(offset, limit, auditLevel)).mapTo[List[Any]]
