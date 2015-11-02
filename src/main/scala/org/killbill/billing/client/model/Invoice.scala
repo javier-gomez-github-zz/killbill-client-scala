@@ -17,7 +17,7 @@ case class Invoice(
   accountId: Option[String],
   items: Option[List[InvoiceItem]],
   bundleKeys: Option[String],
-  credits: List[Credit]
+  credits: Option[List[Credit]]
 )
 
 case class InvoiceResult[T](
@@ -33,7 +33,7 @@ case class InvoiceResult[T](
   accountId: Option[String],
   items: Option[List[InvoiceItem]],
   bundleKeys: Option[String],
-  credits: List[Credit]
+  credits: Option[List[Credit]]
 )
 
 object InvoiceJsonProtocol extends DefaultJsonProtocol {

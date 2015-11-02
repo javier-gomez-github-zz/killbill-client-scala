@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
+import org.killbill.billing.client.actor.InvoiceActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
 import org.killbill.billing.client.model.BillingActionPolicy.BillingActionPolicy
@@ -32,13 +33,49 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val tagDefinitionActor = system.actorOf(Props(new TagDefinitionActor(killBillUrl, headers)), name = "TagDefinitionActor")
   val bundleActor = system.actorOf(Props(new BundleActor(killBillUrl, headers)), name = "BundleActor")
   val subscriptionActor = system.actorOf(Props(new SubscriptionActor(killBillUrl, headers)), name = "SubscriptionActor")
+  val invoiceActor = system.actorOf(Props(new InvoiceActor(killBillUrl, headers)), name = "InvoiceActor")
 
   /**
   Public methods to connect to the KillBill API
    */
 
-  // Subscriptions
+  // Invoices
+  def createInvoice(accountId: UUID, futureDate: String = DateTime.now.toIsoDateString): String = {
+    val future: Future[String] = ask(invoiceActor, CreateInvoice(accountId, futureDate)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
 
+  def searchInvoices(searchKey: String, offset: Long = 0, limit: Long = 100, withItems: Boolean = false, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(invoiceActor, SearchInvoices(searchKey, offset, limit, withItems, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoicesForAccount(accountId: UUID, withItems: Boolean = false, unpaidInvoicesOnly: Boolean = false, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(invoiceActor, GetInvoicesForAccount(accountId, withItems, unpaidInvoicesOnly, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoiceByIdOrNumber(invoiceIdOrNumber: String, withItems: Boolean = false, auditLevel: String = "NONE"): Any = {
+    val future: Future[Any] = ask(invoiceActor, GetInvoiceByIdOrNumber(invoiceIdOrNumber, withItems, auditLevel)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+  
+  def getInvoiceByNumber(invoiceNumber: Int, withItems: Boolean = false, auditLevel: String = "NONE"): Any = {
+    val future: Future[Any] = ask(invoiceActor, GetInvoiceByNumber(invoiceNumber, withItems, auditLevel)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+  
+  def getInvoiceById(invoiceId: UUID, withItems: Boolean = false, auditLevel: String = "NONE"): Any = {
+    val future: Future[Any] = ask(invoiceActor, GetInvoiceById(invoiceId, withItems, auditLevel)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoices(offset: Long = 0, limit: Long = 100, withItems: Boolean = false, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(invoiceActor, GetInvoices(offset, limit, withItems, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  // Subscriptions
   def unCancelSubscription(subscriptionId: UUID): String = {
     val future: Future[String] = ask(subscriptionActor, UnCancelSubscription(subscriptionId)).mapTo[String]
     Await.result(future, timeout.duration)
@@ -116,7 +153,6 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   }
 
   // Accounts
-
   def getEmailNotificationsForAccount(accountId: UUID) = {
     val future: Future[Any] = ask(accountActor, GetEmailNotificationsForAccount(accountId)).mapTo[Any]
     Await.result(future, timeout.duration)
