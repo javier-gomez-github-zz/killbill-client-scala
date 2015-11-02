@@ -11,6 +11,9 @@ import spray.httpx.SprayJsonSupport
 
 import scala.util.{Failure, Success}
 
+/**
+ * Created by jgomez on 30/10/2015.
+ */
 object TagDefinitionActor {
   case class GetTagDefinitions(auditMode: String)
   case class GetTagDefinition(tagDefinitionId: UUID, auditLevel: String)
@@ -57,7 +60,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
     val pipeline = sendReceive ~> unmarshal[List[TagDefinitionResult[TagDefinition]]]
 
     val responseFuture = pipeline {
-      Get(killBillUrl+s"/tagDefinitions?audit="+auditLevel) ~> addHeaders(headers)
+      Get(killBillUrl+s"/tagDefinitions?audit=$auditLevel") ~> addHeaders(headers)
     }
     responseFuture.onComplete {
       case Success(response) =>
@@ -76,7 +79,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
     val pipeline = sendReceive ~> unmarshal[TagDefinitionResult[TagDefinition]]
 
     val responseFuture = pipeline {
-      Get(killBillUrl+s"/tagDefinitions/$tagDefinitionId?audit="+auditLevel) ~> addHeaders(headers)
+      Get(killBillUrl+s"/tagDefinitions/$tagDefinitionId?audit=$auditLevel") ~> addHeaders(headers)
     }
     responseFuture.onComplete {
       case Success(response) =>

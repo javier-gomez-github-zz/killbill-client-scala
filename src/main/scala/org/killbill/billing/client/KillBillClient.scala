@@ -7,8 +7,10 @@ import akka.event.Logging
 import akka.pattern.ask
 import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
+import org.killbill.billing.client.actor.BundleActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
-import org.killbill.billing.client.model.{TagDefinition, Account, AccountEmail, InvoiceEmail}
+import org.killbill.billing.client.model.BillingActionPolicy.BillingActionPolicy
+import org.killbill.billing.client.model._
 import spray.http._
 
 import scala.concurrent.duration._
@@ -27,10 +29,41 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   // create the actors
   val accountActor = system.actorOf(Props(new AccountActor(killBillUrl, headers)), name = "AccountActor")
   val tagDefinitionActor = system.actorOf(Props(new TagDefinitionActor(killBillUrl, headers)), name = "TagDefinitionActor")
+  val bundleActor = system.actorOf(Props(new BundleActor(killBillUrl, headers)), name = "BundleActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+
+  // Bundles
+  def getBundles(offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(bundleActor, GetBundles(offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+  def getBundleByExternalKey(externalKey: String): Any = {
+    val future: Future[Any] = ask(bundleActor, GetBundleByExternalKey(externalKey)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def getBundleById(bundleId: UUID): Any = {
+    val future: Future[Any] = ask(bundleActor, GetBundleById(bundleId)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def searchBundles(searchKey: String, offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(bundleActor, SearchBundles(searchKey, offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getAccountBundles(accountId: UUID, externalKey: String = ""): List[Any] = {
+    val future: Future[List[Any]] = ask(bundleActor, GetAccountBundles(accountId, externalKey)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def transferBundleToAccount(bundle: Bundle, bundleId: UUID, billingPolicy: BillingActionPolicy = BillingActionPolicy.END_OF_TERM): String = {
+    val future: Future[String] = ask(bundleActor, TransferBundleToAccount(bundle, bundleId, billingPolicy)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
 
   // Tag Definitions
   def getTagDefinitions(auditLevel: String = "NONE"): List[Any] = {
