@@ -40,6 +40,27 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
    */
 
   // Invoices
+  def triggerInvoiceNotification(invoiceId: UUID): String = {
+    val future: Future[String] = ask(invoiceActor, TriggerInvoiceNotification(invoiceId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createExternalCharges(accountId: UUID, requestedDate: String = DateTime.now.toIsoDateString, autoPay: Boolean, externalCharges: List[InvoiceItem]): List[Any] = {
+    val future: Future[List[Any]] = ask(invoiceActor, CreateExternalCharge(accountId, requestedDate, autoPay, externalCharges)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def adjustInvoiceItem(invoiceId: UUID, requestedDate: String = DateTime.now.toIsoDateString, invoiceItem: InvoiceItem): String = {
+    val future: Future[String] = ask(invoiceActor, AdjustInvoiceItem(invoiceId, requestedDate, invoiceItem)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  //TODO: HOW DOES IT WORKS? HOW TO TEST IT?
+  def createDryRunInvoice(accountId: UUID, futureDate: String = null, dryRunInfo: InvoiceDryRun): String = {
+    val future: Future[String] = ask(invoiceActor, CreateDryRunInvoice(accountId, futureDate, dryRunInfo)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
   def createInvoice(accountId: UUID, futureDate: String = DateTime.now.toIsoDateString): String = {
     val future: Future[String] = ask(invoiceActor, CreateInvoice(accountId, futureDate)).mapTo[String]
     Await.result(future, timeout.duration)

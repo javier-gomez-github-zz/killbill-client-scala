@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
-import org.killbill.billing.client.model.{Invoice, InvoiceJsonProtocol, InvoiceResult}
+import org.killbill.billing.client.model._
 import spray.client.pipelining._
 import spray.http.HttpHeader
 import spray.httpx.SprayJsonSupport
@@ -22,6 +22,10 @@ object InvoiceActor {
   case class GetInvoicesForAccount(accountId: UUID, withItems: Boolean, unpaidInvoicesOnly: Boolean, auditMode: String)
   case class SearchInvoices(searchKey: String, offset: Long, limit: Long, withItems: Boolean, auditMode: String)
   case class CreateInvoice(accountId: UUID, futureDate: String)
+  case class CreateDryRunInvoice(accountId: UUID, futureDate: String, dryRunInfo: InvoiceDryRun)
+  case class AdjustInvoiceItem(invoiceId: UUID, requestedDate: String, invoiceItem: InvoiceItem)
+  case class CreateExternalCharge(accountId: UUID, requestedDate: String, autoPay: Boolean, externalCharges: List[InvoiceItem])
+  case class TriggerInvoiceNotification(invoiceId: UUID)
 }
 
 case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor {
@@ -61,10 +65,130 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     case CreateInvoice(accountId, futureDate) =>
       createInvoice(sender, accountId, futureDate)
       context.stop(self)
+
+    case CreateDryRunInvoice(accountId, futureDate, dryRunInfo) =>
+      createDryRunInvoice(sender, accountId, futureDate, dryRunInfo)
+      context.stop(self)
+
+    case AdjustInvoiceItem(invoiceId, requestedDate, invoiceItem) =>
+      adjustInvoiceItem(sender, invoiceId, requestedDate, invoiceItem)
+      context.stop(self)
+
+    case CreateExternalCharge(accountId, requestedDate, autoPay, externalCharges) =>
+      createExternalCharges(sender, accountId, requestedDate, autoPay, externalCharges)
+      context.stop(self)
+
+    case TriggerInvoiceNotification(invoiceId) =>
+      triggerInvoiceNotification(sender, invoiceId)
+      context.stop(self)
+  }
+
+  def triggerInvoiceNotification(originalSender: ActorRef, invoiceId: UUID) = {
+    log.info("Triggering Invoice Notification Email to Invoice: " + invoiceId.toString)
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl + s"/invoices/$invoiceId/emailNotifications") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def createExternalCharges(originalSender: ActorRef, accountId: UUID, requestedDate: String, autoPay: Boolean, externalCharges: List[InvoiceItem]) = {
+    log.info("Creating External Charge(s) for Account=" + accountId.toString)
+
+    import InvoiceItemJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive ~> unmarshal[List[InvoiceItemResult[InvoiceItem]]]
+
+    var suffixUrl = ""
+    if (!requestedDate.equalsIgnoreCase("")) {
+      suffixUrl = "?requestedDate=" + requestedDate
+    }
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/invoices/charges/$accountId?payInvoice=$autoPay" + suffixUrl, externalCharges) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        originalSender ! response
+      case Failure(error) =>
+        originalSender ! error.getMessage
+    }
+  }
+
+  def adjustInvoiceItem(originalSender: ActorRef, invoiceId: UUID, requestedDate: String, invoiceItem: InvoiceItem) = {
+    log.info("Adjusting Invoice Item: " + invoiceId.toString)
+
+    import InvoiceItemJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    var suffixUrl = ""
+    if (!requestedDate.equalsIgnoreCase("")) {
+      suffixUrl = "?requestedDate=" + requestedDate
+    }
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/invoices/$invoiceId" + suffixUrl, invoiceItem) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("201")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def createDryRunInvoice(originalSender: ActorRef, accountId: UUID, futureDate: String, dryRunInfo: InvoiceDryRun) = {
+    log.info("Creating new Dry Run Invoice...")
+
+    import InvoiceDryRunJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/invoices/dryRun?accountId=$accountId&targetDate=$futureDate", dryRunInfo) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("201")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
   }
 
   def createInvoice(originalSender: ActorRef, accountId: UUID, futureDate: String) = {
-    log.info("Creating new Tag Definition...")
+    log.info("Creating new Invoice...")
 
     val pipeline = sendReceive
 
