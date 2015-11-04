@@ -9,6 +9,7 @@ import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
 import org.killbill.billing.client.actor.InvoiceActor._
+import org.killbill.billing.client.actor.OverdueActor.{UploadXMLOverdueConfig, GetXMLOverdueConfig, GetOverdueStateForAccount}
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
 import org.killbill.billing.client.model.BillingActionPolicy.BillingActionPolicy
@@ -34,12 +35,59 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val bundleActor = system.actorOf(Props(new BundleActor(killBillUrl, headers)), name = "BundleActor")
   val subscriptionActor = system.actorOf(Props(new SubscriptionActor(killBillUrl, headers)), name = "SubscriptionActor")
   val invoiceActor = system.actorOf(Props(new InvoiceActor(killBillUrl, headers)), name = "InvoiceActor")
+  val overdueActor = system.actorOf(Props(new OverdueActor(killBillUrl, headers)), name = "OverdueActor")
 
   /**
   Public methods to connect to the KillBill API
    */
 
+  // Overdue
+  def uploadXMLOverdueConfig(overdueConfigPath: String): String = {
+    val future: Future[String] = ask(overdueActor, UploadXMLOverdueConfig(overdueConfigPath)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getXMLOverdueConfig(): Any = {
+    val future: Future[Any] = ask(overdueActor, GetXMLOverdueConfig()).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def getOverdueStateForAccount(accountId: UUID): Any = {
+    val future: Future[Any] = ask(overdueActor, GetOverdueStateForAccount(accountId)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
   // Invoices
+  def getCatalogTranslation(locale: String): Any = {
+    val future: Future[Any] = ask(invoiceActor, GetCatalogTranslation(locale)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def uploadCatalogTranslation(invoiceTemplate: String, locale: String): String = {
+    val future: Future[String] = ask(invoiceActor, UploadCatalogTranslation(invoiceTemplate, locale)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoiceTranslation(locale: String): Any = {
+    val future: Future[Any] = ask(invoiceActor, GetInvoiceTranslation(locale)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def uploadInvoiceTranslation(invoiceTemplate: String, locale: String): String = {
+    val future: Future[String] = ask(invoiceActor, UploadInvoiceTranslation(invoiceTemplate, locale)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoiceTemplate(manualPay: Boolean): Any = {
+    val future: Future[Any] = ask(invoiceActor, GetInvoiceTemplate(manualPay)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def uploadInvoiceTemplate(invoiceTemplate: String, manualPay: Boolean): String = {
+    val future: Future[String] = ask(invoiceActor, UploadInvoiceTemplate(invoiceTemplate, manualPay)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
   def triggerInvoiceNotification(invoiceId: UUID): String = {
     val future: Future[String] = ask(invoiceActor, TriggerInvoiceNotification(invoiceId)).mapTo[String]
     Await.result(future, timeout.duration)

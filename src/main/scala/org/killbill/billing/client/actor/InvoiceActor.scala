@@ -26,6 +26,12 @@ object InvoiceActor {
   case class AdjustInvoiceItem(invoiceId: UUID, requestedDate: String, invoiceItem: InvoiceItem)
   case class CreateExternalCharge(accountId: UUID, requestedDate: String, autoPay: Boolean, externalCharges: List[InvoiceItem])
   case class TriggerInvoiceNotification(invoiceId: UUID)
+  case class UploadInvoiceTemplate(invoiceTemplate: String, manualPay: Boolean)
+  case class GetInvoiceTemplate(manualPay: Boolean)
+  case class UploadInvoiceTranslation(invoiceTemplate: String, locale: String)
+  case class GetInvoiceTranslation(locale: String)
+  case class UploadCatalogTranslation(invoiceTemplate: String, locale: String)
+  case class GetCatalogTranslation(locale: String)
 }
 
 case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor {
@@ -81,6 +87,175 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     case TriggerInvoiceNotification(invoiceId) =>
       triggerInvoiceNotification(sender, invoiceId)
       context.stop(self)
+
+    case UploadInvoiceTemplate(invoiceTemplate, manualPay) =>
+      uploadInvoiceTemplate(sender, invoiceTemplate, manualPay)
+      context.stop(self)
+
+    case GetInvoiceTemplate(manualPay) =>
+      getInvoiceTemplate(sender, manualPay)
+      context.stop(self)
+
+    case UploadInvoiceTranslation(invoiceTemplate, locale) =>
+      uploadInvoiceTranslation(sender, invoiceTemplate, locale)
+      context.stop(self)
+
+    case GetInvoiceTranslation(locale) =>
+      getInvoiceTranslation(sender, locale)
+      context.stop(self)
+
+    case UploadCatalogTranslation(invoiceTemplate, locale) =>
+      uploadCatalogTranslation(sender, invoiceTemplate, locale)
+      context.stop(self)
+
+    case GetCatalogTranslation(locale) =>
+      getCatalogTranslation(sender, locale)
+      context.stop(self)
+  }
+
+  def getCatalogTranslation(originalSender: ActorRef, locale: String) = {
+    log.info("Getting Catalog Translation...")
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Get(killBillUrl + s"/invoices/catalogTranslation/$locale") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        if (response.status.toString().contains("200")) {
+          originalSender ! response.entity
+        }
+        else if (response.status.toString().contains("404")) {
+          originalSender ! "Catalog Translations not found"
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      case Failure(error) =>
+        originalSender ! error.getMessage
+    }
+  }
+
+  def uploadCatalogTranslation(originalSender: ActorRef, invoiceTemplate: String, locale: String) = {
+    log.info("Uploading Catalog Translation...")
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl + s"/invoices/catalogTranslation/$locale", invoiceTemplate) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def getInvoiceTranslation(originalSender: ActorRef, locale: String) = {
+    log.info("Getting Invoice Translation...")
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Get(killBillUrl + s"/invoices/translation/$locale") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        if (response.status.toString().contains("200")) {
+          originalSender ! response.entity
+        }
+        else if (response.status.toString().contains("404")) {
+          originalSender ! "Invoice Translations not found"
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      case Failure(error) =>
+        originalSender ! error.getMessage
+    }
+  }
+
+  def uploadInvoiceTranslation(originalSender: ActorRef, invoiceTemplate: String, locale: String) = {
+    log.info("Uploading Invoice Translation...")
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl + s"/invoices/translation/$locale", invoiceTemplate) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def getInvoiceTemplate(originalSender: ActorRef, manualPay: Boolean) = {
+    log.info("Getting Invoice Template...")
+
+    val pipeline = sendReceive
+
+    var suffixUrl = ""
+    if (manualPay) {
+      suffixUrl = "manualPayTemplate"
+    }
+    else suffixUrl = "template"
+
+    val responseFuture = pipeline {
+      Get(killBillUrl + s"/invoices/$suffixUrl") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) =>
+        originalSender ! response.entity
+      case Failure(error) =>
+        originalSender ! error.getMessage
+    }
+  }
+
+  def uploadInvoiceTemplate(originalSender: ActorRef, invoiceTemplate: String, manualPay: Boolean) = {
+    log.info("Uploading Invoice Template...")
+
+    val pipeline = sendReceive
+
+    var suffixUrl = ""
+    if (manualPay) {
+      suffixUrl = "manualPayTemplate"
+    }
+    else suffixUrl = "template"
+
+    val responseFuture = pipeline {
+      Post(killBillUrl + s"/invoices/$suffixUrl", invoiceTemplate) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
   }
 
   def triggerInvoiceNotification(originalSender: ActorRef, invoiceId: UUID) = {
