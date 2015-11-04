@@ -9,8 +9,9 @@ import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
 import org.killbill.billing.client.actor.InvoiceActor._
-import org.killbill.billing.client.actor.OverdueActor.{UploadXMLOverdueConfig, GetXMLOverdueConfig, GetOverdueStateForAccount}
+import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.SubscriptionActor._
+import org.killbill.billing.client.actor.TagActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
 import org.killbill.billing.client.model.BillingActionPolicy.BillingActionPolicy
 import org.killbill.billing.client.model._
@@ -36,10 +37,57 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val subscriptionActor = system.actorOf(Props(new SubscriptionActor(killBillUrl, headers)), name = "SubscriptionActor")
   val invoiceActor = system.actorOf(Props(new InvoiceActor(killBillUrl, headers)), name = "InvoiceActor")
   val overdueActor = system.actorOf(Props(new OverdueActor(killBillUrl, headers)), name = "OverdueActor")
+  val tagActor = system.actorOf(Props(new TagActor(killBillUrl, headers)), name = "TagActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+
+  // Tags
+  def deleteBundleTag(bundleId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, DeleteBundleTag(bundleId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createBundleTag(bundleId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, CreateBundleTag(bundleId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getBundleTags(bundleId: UUID, auditLevel: String = "NONE", includedDeleted: Boolean = false): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetBundleTags(bundleId, auditLevel, includedDeleted)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def deleteAccountTag(accountId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, DeleteAccountTag(accountId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createAccountTag(accountId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, CreateAccountTag(accountId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getAccountTags(accountId: UUID, auditLevel: String = "NONE", includedDeleted: Boolean = false): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetAccountTags(accountId, auditLevel, includedDeleted)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getAllAccountTags(accountId: UUID, objectType: String = "", auditLevel: String = "NONE", includedDeleted: Boolean = false): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetAllAccountTags(accountId, objectType, auditLevel, includedDeleted)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def searchTags(searchKey: String, offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, SearchTags(searchKey, offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getTags(offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetTags(offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
 
   // Overdue
   def uploadXMLOverdueConfig(overdueConfigPath: String): String = {
@@ -175,6 +223,7 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
     val future: Future[List[Any]] = ask(bundleActor, GetBundles(offset, limit, auditLevel)).mapTo[List[Any]]
     Await.result(future, timeout.duration)
   }
+
   def getBundleByExternalKey(externalKey: String): Any = {
     val future: Future[Any] = ask(bundleActor, GetBundleByExternalKey(externalKey)).mapTo[Any]
     Await.result(future, timeout.duration)
