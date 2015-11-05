@@ -44,6 +44,51 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
    */
 
   // Tags
+  def deletePaymentTag(paymentId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, DeletePaymentTag(paymentId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createPaymentTag(paymentId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, CreatePaymentTag(paymentId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPaymentTags(paymentId: UUID, auditLevel: String = "NONE", includedDeleted: Boolean = false): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetPaymentTags(paymentId, auditLevel, includedDeleted)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def deleteInvoiceTag(invoiceId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, DeleteInvoiceTag(invoiceId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createInvoiceTag(invoiceId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, CreateInvoiceTag(invoiceId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoiceTags(invoiceId: UUID, auditLevel: String = "NONE", includedDeleted: Boolean = false): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetInvoiceTags(invoiceId, auditLevel, includedDeleted)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def deleteSubscriptionTag(subscriptionId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, DeleteSubscriptionTag(subscriptionId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createSubscriptionTag(subscriptionId: UUID, tagDefinitionId: UUID): String = {
+    val future: Future[String] = ask(tagActor, CreateSubscriptionTag(subscriptionId, tagDefinitionId)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getSubscriptionTags(subscriptionId: UUID, auditLevel: String = "NONE", includedDeleted: Boolean = false): List[Any] = {
+    val future: Future[List[Any]] = ask(tagActor, GetSubscriptionTags(subscriptionId, auditLevel, includedDeleted)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
   def deleteBundleTag(bundleId: UUID, tagDefinitionId: UUID): String = {
     val future: Future[String] = ask(tagActor, DeleteBundleTag(bundleId, tagDefinitionId)).mapTo[String]
     Await.result(future, timeout.duration)
