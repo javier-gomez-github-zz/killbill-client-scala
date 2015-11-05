@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
+import org.killbill.billing.client.actor.CreditActor.{CreateCredit, GetCredit}
 import org.killbill.billing.client.actor.InvoiceActor._
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.SubscriptionActor._
@@ -38,10 +39,21 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val invoiceActor = system.actorOf(Props(new InvoiceActor(killBillUrl, headers)), name = "InvoiceActor")
   val overdueActor = system.actorOf(Props(new OverdueActor(killBillUrl, headers)), name = "OverdueActor")
   val tagActor = system.actorOf(Props(new TagActor(killBillUrl, headers)), name = "TagActor")
+  val creditActor = system.actorOf(Props(new CreditActor(killBillUrl, headers)), name = "CreditActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Credits
+  def createCredit(credit: Credit): String = {
+    val future: Future[String] = ask(creditActor, CreateCredit(credit)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getCredit(creditId: UUID): Any = {
+    val future: Future[Any] = ask(creditActor, GetCredit(creditId)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
 
   // Tags
   def deletePaymentTag(paymentId: UUID, tagDefinitionId: UUID): String = {
