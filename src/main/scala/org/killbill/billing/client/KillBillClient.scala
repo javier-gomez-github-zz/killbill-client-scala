@@ -10,6 +10,7 @@ import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
 import org.killbill.billing.client.actor.CreditActor.{CreateCredit, GetCredit}
 import org.killbill.billing.client.actor.InvoiceActor._
+import org.killbill.billing.client.actor.InvoicePaymentActor.{CreateInvoicePayment, PayAllInvoices, GetInvoicePayment, GetInvoicePaymentsForAccount}
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.PaymentActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
@@ -42,12 +43,45 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val tagActor = system.actorOf(Props(new TagActor(killBillUrl, headers)), name = "TagActor")
   val creditActor = system.actorOf(Props(new CreditActor(killBillUrl, headers)), name = "CreditActor")
   val paymentActor = system.actorOf(Props(new PaymentActor(killBillUrl, headers)), name = "PaymentActor")
+  val invoicePaymentActor = system.actorOf(Props(new InvoicePaymentActor(killBillUrl, headers)), name = "InvoicePaymentActor")
 
   /**
   Public methods to connect to the KillBill API
    */
 
+  // Invoice Payments
+  def createInvoicePayment(invoiceId: UUID, invoicePayment: InvoicePayment, isExternal: Boolean = false): String = {
+    val future: Future[String] = ask(invoicePaymentActor, CreateInvoicePayment(invoiceId, invoicePayment, isExternal)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def payAllInvoices(accountId: UUID, externalPayment: Boolean = false, paymentAmount: BigDecimal = null): String = {
+    val future: Future[String] = ask(invoicePaymentActor, PayAllInvoices(accountId, externalPayment, paymentAmount)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoicePayment(invoiceId: UUID): List[Any] = {
+    val future: Future[List[Any]] = ask(invoicePaymentActor, GetInvoicePayment(invoiceId)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getInvoicePaymentsForAccount(accountId: UUID, auditLevel: String = "NONE", withPluginInfo: String = ""): List[Any] = {
+    val future: Future[List[Any]] = ask(invoicePaymentActor, GetInvoicePaymentsForAccount(accountId, auditLevel, withPluginInfo)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
   // Payments
+  def completePayment(paymentTransaction: PaymentTransaction,pluginProperties: Map[String, String] = Map[String, String]()): String = {
+    val future: Future[String] = ask(paymentActor, CompletePayment(paymentTransaction, pluginProperties)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createPayment(accountId: UUID, paymentMethodId: UUID = null, paymentTransaction: PaymentTransaction,
+                    pluginProperties: Map[String, String] = Map[String, String]()): Any = {
+    val future: Future[Any] = ask(paymentActor, CreatePayment(accountId, paymentMethodId, paymentTransaction, pluginProperties)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
   def createComboPayment(comboPaymentTransaction: ComboPaymentTransaction, controlPluginNames: List[String] = List[String](),
                          pluginProperties: Map[String, String] = Map[String, String]()): Any = {
     val future: Future[Any] = ask(paymentActor, CreateComboPayment(comboPaymentTransaction, controlPluginNames, pluginProperties)).mapTo[Any]
