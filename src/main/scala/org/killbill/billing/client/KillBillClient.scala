@@ -14,6 +14,7 @@ import org.killbill.billing.client.actor.InvoicePaymentActor._
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.PaymentActor._
 import org.killbill.billing.client.actor.PaymentGatewayActor.{ProcessNotification, BuildComboFormDescriptor, BuildFormDescriptor}
+import org.killbill.billing.client.actor.PaymentMethodActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
@@ -46,10 +47,46 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val paymentActor = system.actorOf(Props(new PaymentActor(killBillUrl, headers)), name = "PaymentActor")
   val invoicePaymentActor = system.actorOf(Props(new InvoicePaymentActor(killBillUrl, headers)), name = "InvoicePaymentActor")
   val paymentGatewayActor = system.actorOf(Props(new PaymentGatewayActor(killBillUrl, headers)), name = "PaymentGatewayActor")
+  val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor(killBillUrl, headers)), name = "PaymentMethodActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+
+  // Payment Methods
+  def createPaymentMethod(accountId: UUID, paymentMethod: PaymentMethod, isDefault: Boolean = false,
+                          payAllUnpaidInvoices: Boolean = false): Any = {
+    val future: Future[Any] = ask(paymentMethodActor, CreatePaymentMethod(accountId, paymentMethod, isDefault, payAllUnpaidInvoices)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPaymentMethodsForAccount(accountId: UUID, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(paymentMethodActor, GetPaymentMethodsForAccount(accountId, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPaymentMethodByExternalKey(externalKey: String, withPluginInfo: Boolean = false, auditLevel: String = "NONE"): Any = {
+    val future: Future[Any] = ask(paymentMethodActor, GetPaymentMethodByExternalKey(externalKey, withPluginInfo, auditLevel)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPaymentMethodById(paymentMethodId: UUID, withPluginInfo: Boolean = false, auditLevel: String = "NONE"): Any = {
+    val future: Future[Any] = ask(paymentMethodActor, GetPaymentMethodById(paymentMethodId, withPluginInfo, auditLevel)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def searchPaymentMethods(searchKey: String, offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE",
+                           withPluginInfo: Boolean = false, pluginName: String = ""): List[Any] = {
+    val future: Future[List[Any]] = ask(paymentMethodActor, SearchPaymentMethods(searchKey, offset, limit, auditLevel,
+      withPluginInfo, pluginName)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPaymentMethods(offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(paymentMethodActor, GetPaymentMethods(offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
   // Payment Gateways (Hosted Payment pages)
   def processNotification(notification: String, pluginName: String, pluginProperties: Map[String, String] = Map[String, String]()): Any = {
     val future: Future[Any] = ask(paymentGatewayActor, ProcessNotification(notification, pluginName, pluginProperties)).mapTo[Any]
@@ -324,7 +361,6 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
     Await.result(future, timeout.duration)
   }
 
-  //TODO: HOW DOES IT WORKS? HOW TO TEST IT?
   def createDryRunInvoice(accountId: UUID, futureDate: String = null, dryRunInfo: InvoiceDryRun): String = {
     val future: Future[String] = ask(invoiceActor, CreateDryRunInvoice(accountId, futureDate, dryRunInfo)).mapTo[String]
     Await.result(future, timeout.duration)
