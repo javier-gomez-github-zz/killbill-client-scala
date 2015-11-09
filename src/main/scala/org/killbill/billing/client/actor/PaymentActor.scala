@@ -88,11 +88,6 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def voidPayment(originalSender: ActorRef, paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String]) = {
     log.info("Voiding Payment...")
 
-    import PaymentTransactionJsonProtocol._
-    import SprayJsonSupport._
-
-    val pipeline = sendReceive
-
     var url = ""
     if(paymentTransaction.paymentId != null) {
       val paymentId = paymentTransaction.paymentId.mkString
@@ -100,31 +95,11 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     }
     else url = killBillUrl + "/payments"
 
-    val responseFuture = pipeline {
-      Delete(url, paymentTransaction) ~> addHeaders(headers)
-    }
-    responseFuture.onComplete {
-      case Success(response) => {
-        if (!response.status.toString().contains("201")) {
-          originalSender ! response.entity.asString
-        }
-        else {
-          originalSender ! response.status.toString()
-        }
-      }
-      case Failure(error) => {
-        originalSender ! error.getMessage()
-      }
-    }
+    doActionWithPayment(originalSender, url, "Delete", paymentTransaction)
   }
 
   def chargebackPayment(originalSender: ActorRef, paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String]) = {
     log.info("Charging back Payment...")
-
-    import PaymentTransactionJsonProtocol._
-    import SprayJsonSupport._
-
-    val pipeline = sendReceive
 
     var url = ""
     if(paymentTransaction.paymentId != null) {
@@ -133,31 +108,11 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     }
     else url = killBillUrl + "/payments/chargebacks"
 
-    val responseFuture = pipeline {
-      Post(url, paymentTransaction) ~> addHeaders(headers)
-    }
-    responseFuture.onComplete {
-      case Success(response) => {
-        if (!response.status.toString().contains("201")) {
-          originalSender ! response.entity.asString
-        }
-        else {
-          originalSender ! response.status.toString()
-        }
-      }
-      case Failure(error) => {
-        originalSender ! error.getMessage()
-      }
-    }
+    doActionWithPayment(originalSender, url, "Post", paymentTransaction)
   }
 
   def refundPayment(originalSender: ActorRef, paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String]) = {
     log.info("Refunding Payment...")
-
-    import PaymentTransactionJsonProtocol._
-    import SprayJsonSupport._
-
-    val pipeline = sendReceive
 
     var url = ""
     if(paymentTransaction.paymentId != null) {
@@ -166,32 +121,12 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     }
     else url = killBillUrl + "/payments/refunds"
 
-    val responseFuture = pipeline {
-      Post(url, paymentTransaction) ~> addHeaders(headers)
-    }
-    responseFuture.onComplete {
-      case Success(response) => {
-        if (!response.status.toString().contains("201")) {
-          originalSender ! response.entity.asString
-        }
-        else {
-          originalSender ! response.status.toString()
-        }
-      }
-      case Failure(error) => {
-        originalSender ! error.getMessage()
-      }
-    }
+    doActionWithPayment(originalSender, url, "Post", paymentTransaction)
   }
 
   def captureAuthorization(originalSender: ActorRef, paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String]) = {
     log.info("Capturing Authorization...")
 
-    import PaymentTransactionJsonProtocol._
-    import SprayJsonSupport._
-
-    val pipeline = sendReceive
-
     var url = ""
     if(paymentTransaction.paymentId != null) {
       val paymentId = paymentTransaction.paymentId.mkString
@@ -199,32 +134,12 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     }
     else url = killBillUrl + "/payments"
 
-    val responseFuture = pipeline {
-      Post(url, paymentTransaction) ~> addHeaders(headers)
-    }
-    responseFuture.onComplete {
-      case Success(response) => {
-        if (!response.status.toString().contains("201")) {
-          originalSender ! response.entity.asString
-        }
-        else {
-          originalSender ! response.status.toString()
-        }
-      }
-      case Failure(error) => {
-        originalSender ! error.getMessage()
-      }
-    }
+    doActionWithPayment(originalSender, url, "Post", paymentTransaction)
   }
 
   def completePayment(originalSender: ActorRef, paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String]) = {
     log.info("Completing Payment...")
 
-    import PaymentTransactionJsonProtocol._
-    import SprayJsonSupport._
-
-    val pipeline = sendReceive
-
     var url = ""
     if(paymentTransaction.paymentId != null) {
       val paymentId = paymentTransaction.paymentId.mkString
@@ -232,8 +147,21 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     }
     else url = killBillUrl + "/payments"
 
+    doActionWithPayment(originalSender, url, "Put", paymentTransaction)
+  }
+
+  def doActionWithPayment(originalSender: ActorRef, url: String, action: String, paymentTransaction: PaymentTransaction) = {
+    import PaymentTransactionJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
     val responseFuture = pipeline {
-      Put(url, paymentTransaction) ~> addHeaders(headers)
+      action match {
+        case "Put" => Put(url, paymentTransaction) ~> addHeaders(headers)
+        case "Post" => Post(url, paymentTransaction) ~> addHeaders(headers)
+        case "Delete" => Delete(url, paymentTransaction) ~> addHeaders(headers)
+      }
     }
     responseFuture.onComplete {
       case Success(response) => {
