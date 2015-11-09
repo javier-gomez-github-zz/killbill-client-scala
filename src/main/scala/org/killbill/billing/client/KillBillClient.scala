@@ -10,9 +10,10 @@ import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
 import org.killbill.billing.client.actor.CreditActor.{CreateCredit, GetCredit}
 import org.killbill.billing.client.actor.InvoiceActor._
-import org.killbill.billing.client.actor.InvoicePaymentActor.{CreateInvoicePayment, PayAllInvoices, GetInvoicePayment, GetInvoicePaymentsForAccount}
+import org.killbill.billing.client.actor.InvoicePaymentActor._
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.PaymentActor._
+import org.killbill.billing.client.actor.PaymentGatewayActor.{ProcessNotification, BuildComboFormDescriptor, BuildFormDescriptor}
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
@@ -44,10 +45,28 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val creditActor = system.actorOf(Props(new CreditActor(killBillUrl, headers)), name = "CreditActor")
   val paymentActor = system.actorOf(Props(new PaymentActor(killBillUrl, headers)), name = "PaymentActor")
   val invoicePaymentActor = system.actorOf(Props(new InvoicePaymentActor(killBillUrl, headers)), name = "InvoicePaymentActor")
+  val paymentGatewayActor = system.actorOf(Props(new PaymentGatewayActor(killBillUrl, headers)), name = "PaymentGatewayActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Payment Gateways (Hosted Payment pages)
+  def processNotification(notification: String, pluginName: String, pluginProperties: Map[String, String] = Map[String, String]()): Any = {
+    val future: Future[Any] = ask(paymentGatewayActor, ProcessNotification(notification, pluginName, pluginProperties)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def buildComboFormDescriptor(comboHostedPaymentPage: ComboHostedPaymentPage, controlPluginNames: List[String] = List[String](),
+                               pluginProperties: Map[String, String] = Map[String, String]()): Any = {
+    val future: Future[Any] = ask(paymentGatewayActor, BuildComboFormDescriptor(comboHostedPaymentPage, controlPluginNames, pluginProperties)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def buildFormDescriptor(fields: HostedPaymentPageFields, kbAccountId: UUID, kbPaymentMethodId: UUID,
+                          pluginProperties: Map[String, String] = Map[String, String]()): Any = {
+    val future: Future[Any] = ask(paymentGatewayActor, BuildFormDescriptor(fields, kbAccountId, kbPaymentMethodId, pluginProperties)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
 
   // Payments
   def voidPayment(paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String] = Map[String, String]()): String = {
@@ -128,6 +147,16 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
 
   def getInvoicePaymentsForAccount(accountId: UUID, auditLevel: String = "NONE", withPluginInfo: String = ""): List[Any] = {
     val future: Future[List[Any]] = ask(invoicePaymentActor, GetInvoicePaymentsForAccount(accountId, auditLevel, withPluginInfo)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def createInvoicePaymentRefund(paymentId: UUID, refundTransaction: InvoicePaymentTransaction): String = {
+    val future: Future[String] = ask(invoicePaymentActor, CreateInvoicePaymentRefund(paymentId, refundTransaction)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createInvoicePaymentChargeback(paymentId: UUID, chargebackTransaction: InvoicePaymentTransaction): String = {
+    val future: Future[String] = ask(invoicePaymentActor, CreateInvoicePaymentChargeback(paymentId, chargebackTransaction)).mapTo[String]
     Await.result(future, timeout.duration)
   }
 

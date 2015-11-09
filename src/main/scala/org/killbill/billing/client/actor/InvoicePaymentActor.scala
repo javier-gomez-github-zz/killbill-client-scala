@@ -19,6 +19,9 @@ object InvoicePaymentActor {
   case class GetInvoicePayment(invoiceId: UUID)
   case class PayAllInvoices(accountId: UUID, externalPayment: Boolean, paymentAmount: BigDecimal)
   case class CreateInvoicePayment(invoiceId: UUID, invoicePaymet: InvoicePayment, isExternal: Boolean)
+  case class CreateInvoicePaymentRefund(paymentId: UUID, refundTransaction: InvoicePaymentTransaction)
+  case class CreateInvoicePaymentChargeback(paymentId: UUID, chargebackTransaction: InvoicePaymentTransaction)
+
 }
 
 case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor {
@@ -46,6 +49,66 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
     case CreateInvoicePayment(invoiceId, invoicePayment, isExternal) =>
       createInvoicePayment(sender, invoiceId, invoicePayment, isExternal)
       context.stop(self)
+
+    case CreateInvoicePaymentRefund(paymentId, refundTransaction) =>
+      createInvoicePaymentRefund(sender, paymentId, refundTransaction)
+      context.stop(self)
+
+    case CreateInvoicePaymentChargeback(paymentId, chargebackTransaction) =>
+      createInvoicePaymentChargeback(sender, paymentId, chargebackTransaction)
+      context.stop(self)
+  }
+
+  def createInvoicePaymentChargeback(originalSender: ActorRef, paymentId: UUID, chargebackTransaction: InvoicePaymentTransaction) = {
+    log.info("Creating an Invoice Payment Chargeback...")
+
+    import InvoicePaymentTransactionJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/invoicePayments/$paymentId/chargebacks", chargebackTransaction) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("201")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def createInvoicePaymentRefund(originalSender: ActorRef, paymentId: UUID, refundTransaction: InvoicePaymentTransaction) = {
+    log.info("Creating an Invoice Payment Refund...")
+
+    import InvoicePaymentTransactionJsonProtocol._
+    import SprayJsonSupport._
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Post(killBillUrl+s"/invoicePayments/$paymentId/refunds", refundTransaction) ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("201")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
   }
 
   def createInvoicePayment(originalSender: ActorRef, invoiceId: UUID, invoicePayment: InvoicePayment, isExternal: Boolean) = {
