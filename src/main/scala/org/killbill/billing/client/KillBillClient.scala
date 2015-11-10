@@ -13,7 +13,7 @@ import org.killbill.billing.client.actor.InvoiceActor._
 import org.killbill.billing.client.actor.InvoicePaymentActor._
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.PaymentActor._
-import org.killbill.billing.client.actor.PaymentGatewayActor.{ProcessNotification, BuildComboFormDescriptor, BuildFormDescriptor}
+import org.killbill.billing.client.actor.PaymentGatewayActor.{BuildComboFormDescriptor, BuildFormDescriptor, ProcessNotification}
 import org.killbill.billing.client.actor.PaymentMethodActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
@@ -54,6 +54,17 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
    */
 
   // Payment Methods
+  def deletePaymentMethod(paymentMethodId: UUID, deleteDefault: Boolean = false, pluginProperties: Map[String, String] = Map[String, String]()): String = {
+    val future: Future[String] = ask(paymentMethodActor, DeletePaymentMethod(paymentMethodId, deleteDefault, pluginProperties)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def updatePaymentMethod(accountId: UUID, paymentMethodId: UUID, pluginProperties: Map[String, String] = Map[String, String](),
+                          payAllUnpaidInvoices: Boolean = false): String = {
+    val future: Future[String] = ask(paymentMethodActor, UpdatePaymentMethod(accountId, paymentMethodId, pluginProperties, payAllUnpaidInvoices)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
   def createPaymentMethod(accountId: UUID, paymentMethod: PaymentMethod, isDefault: Boolean = false,
                           payAllUnpaidInvoices: Boolean = false): Any = {
     val future: Future[Any] = ask(paymentMethodActor, CreatePaymentMethod(accountId, paymentMethod, isDefault, payAllUnpaidInvoices)).mapTo[Any]

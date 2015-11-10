@@ -21,6 +21,8 @@ object PaymentMethodActor {
   case class GetPaymentMethodByExternalKey(externalKey: String, withPluginInfo: Boolean, auditMode: String)
   case class GetPaymentMethodsForAccount(accountId: UUID, auditMode: String)
   case class CreatePaymentMethod(accountId: UUID, paymentMethod: PaymentMethod, isDefault: Boolean, payAllUnpaidInvoices: Boolean)
+  case class UpdatePaymentMethod(accountId: UUID, paymentMethodId: UUID, pluginProperties: Map[String, String], payAllUnpaidInvoices: Boolean)
+  case class DeletePaymentMethod(paymentMethodId: UUID, deleteDefault: Boolean, pluginProperties: Map[String, String])
 }
 
 case class PaymentMethodActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor {
@@ -56,6 +58,60 @@ case class PaymentMethodActor(killBillUrl: String, headers: List[HttpHeader]) ex
     case CreatePaymentMethod(accountId, paymentMethod, isDefault, payAllUnpaidInvoices) =>
       createPaymentMethod(sender, accountId, paymentMethod, isDefault, payAllUnpaidInvoices)
       context.stop(self)
+
+    case UpdatePaymentMethod(accountId, paymentMethodId, pluginProperties, payAllUnpaidInvoices) =>
+      updatePaymentMethod(sender, accountId, paymentMethodId, pluginProperties, payAllUnpaidInvoices)
+      context.stop(self)
+
+    case DeletePaymentMethod(paymentMethodId, deleteDefault, pluginProperties) =>
+      deletePaymentMethod(sender, paymentMethodId, deleteDefault, pluginProperties)
+      context.stop(self)
+  }
+
+  def deletePaymentMethod(originalSender: ActorRef, paymentMethodId: UUID, deleteDefault: Boolean, pluginProperties: Map[String, String]) = {
+    log.info("Deleting Payment Method...")
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Delete(killBillUrl+s"/paymentMethods/$paymentMethodId?deleteDefaultPmWithAutoPayOff=$deleteDefault&pluginProperty=$pluginProperties") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
+  }
+
+  def updatePaymentMethod(originalSender: ActorRef, accountId: UUID, paymentMethodId: UUID, pluginProperties: Map[String, String], payAllUnpaidInvoices: Boolean) = {
+    log.info("Updating Payment Method...")
+
+    val pipeline = sendReceive
+
+    val responseFuture = pipeline {
+      Put(killBillUrl+s"/accounts/$accountId/paymentMethods/$paymentMethodId/setDefault?payAllUnpaidInvoices=$payAllUnpaidInvoices&pluginProperty=$pluginProperties") ~> addHeaders(headers)
+    }
+    responseFuture.onComplete {
+      case Success(response) => {
+        if (!response.status.toString().contains("200")) {
+          originalSender ! response.entity.asString
+        }
+        else {
+          originalSender ! response.status.toString()
+        }
+      }
+      case Failure(error) => {
+        originalSender ! error.getMessage()
+      }
+    }
   }
 
   def createPaymentMethod(originalSender: ActorRef, accountId: UUID, paymentMethod: PaymentMethod, isDefault: Boolean, payAllUnpaidInvoices: Boolean) = {
