@@ -9,11 +9,15 @@ import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
 import org.killbill.billing.client.actor.CreditActor.{CreateCredit, GetCredit}
+import org.killbill.billing.client.actor.CustomFieldActor._
 import org.killbill.billing.client.actor.InvoiceActor._
 import org.killbill.billing.client.actor.InvoicePaymentActor._
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.PaymentActor._
 import org.killbill.billing.client.actor.PaymentGatewayActor.{BuildComboFormDescriptor, BuildFormDescriptor, ProcessNotification}
+import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodByExternalKey
+import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodById
+import org.killbill.billing.client.actor.PaymentMethodActor.UpdatePaymentMethod
 import org.killbill.billing.client.actor.PaymentMethodActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
@@ -48,10 +52,51 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val invoicePaymentActor = system.actorOf(Props(new InvoicePaymentActor(killBillUrl, headers)), name = "InvoicePaymentActor")
   val paymentGatewayActor = system.actorOf(Props(new PaymentGatewayActor(killBillUrl, headers)), name = "PaymentGatewayActor")
   val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor(killBillUrl, headers)), name = "PaymentMethodActor")
+  val customFieldActor = system.actorOf(Props(new CustomFieldActor(killBillUrl, headers)), name = "CustomFieldActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Custom Fields
+  def deletePaymentMethodCustomFields(paymentMethodId: UUID, customFields: List[UUID] = List[UUID]()): String = {
+    val future: Future[String] = ask(customFieldActor, DeletePaymentMethodCustomFields(paymentMethodId, customFields)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createPaymentMethodCustomFields(paymentMethodId: UUID, customFields: List[CustomField]): String = {
+    val future: Future[String] = ask(customFieldActor, CreatePaymentMethodCustomFields(paymentMethodId, customFields)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPaymentMethodCustomFields(paymentMethodId: UUID, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(customFieldActor, GetPaymentMethodCustomFields(paymentMethodId, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def deleteAccountCustomFields(accountId: UUID, customFields: List[UUID] = List[UUID]()): String = {
+    val future: Future[String] = ask(customFieldActor, DeleteAccountCustomFields(accountId, customFields)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createAccountCustomFields(accountId: UUID, customFields: List[CustomField]): String = {
+    val future: Future[String] = ask(customFieldActor, CreateAccountCustomFields(accountId, customFields)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getAccountCustomFields(accountId: UUID, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(customFieldActor, GetAccountCustomFields(accountId, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def searchCustomFields(searchKey: String, offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(customFieldActor, SearchCustomFields(searchKey, offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getCustomFields(offset: Long = 0, limit: Long = 100, auditLevel: String = "NONE"): List[Any] = {
+    val future: Future[List[Any]] = ask(customFieldActor, GetCustomFields(offset, limit, auditLevel)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
 
   // Payment Methods
   def deletePaymentMethod(paymentMethodId: UUID, deleteDefault: Boolean = false, pluginProperties: Map[String, String] = Map[String, String]()): String = {
