@@ -20,6 +20,7 @@ import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodByEx
 import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodById
 import org.killbill.billing.client.actor.PaymentMethodActor.UpdatePaymentMethod
 import org.killbill.billing.client.actor.PaymentMethodActor._
+import org.killbill.billing.client.actor.SecurityActor.GetPermissions
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
@@ -57,10 +58,17 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val customFieldActor = system.actorOf(Props(new CustomFieldActor(killBillUrl, headers)), name = "CustomFieldActor")
   val catalogActor = system.actorOf(Props(new CatalogActor(killBillUrl, headers)), name = "CatalogActor")
   val tenantActor = system.actorOf(Props(new TenantActor(killBillUrl, headers)), name = "TenantActor")
+  val securityActor = system.actorOf(Props(new SecurityActor(killBillUrl, headers)), name = "SecurityActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Security
+  def getPermissions(): List[Any] = {
+    val future: Future[List[Any]] = ask(securityActor, GetPermissions()).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
   // Tenants
   def unRegisterPluginConfigurationForTenant(pluginName: String): String = {
     val future: Future[String] = ask(tenantActor, UnRegisterPluginConfigurationForTenant(pluginName)).mapTo[String]
