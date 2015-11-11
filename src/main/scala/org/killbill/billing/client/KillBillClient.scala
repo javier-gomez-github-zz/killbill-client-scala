@@ -23,6 +23,7 @@ import org.killbill.billing.client.actor.PaymentMethodActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
+import org.killbill.billing.client.actor.TenantActor._
 import org.killbill.billing.client.model.BillingActionPolicy.BillingActionPolicy
 import org.killbill.billing.client.model._
 import spray.http._
@@ -55,10 +56,47 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor(killBillUrl, headers)), name = "PaymentMethodActor")
   val customFieldActor = system.actorOf(Props(new CustomFieldActor(killBillUrl, headers)), name = "CustomFieldActor")
   val catalogActor = system.actorOf(Props(new CatalogActor(killBillUrl, headers)), name = "CatalogActor")
+  val tenantActor = system.actorOf(Props(new TenantActor(killBillUrl, headers)), name = "TenantActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Tenants
+  def unRegisterPluginConfigurationForTenant(pluginName: String): String = {
+    val future: Future[String] = ask(tenantActor, UnRegisterPluginConfigurationForTenant(pluginName)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getPluginConfigurationForTenant(pluginName: String): Any = {
+    val future: Future[Any] = ask(tenantActor, GetPluginConfigurationForTenant(pluginName)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def registerPluginConfigurationForTenant(pluginName: String, pluginConfig: String): String = {
+    val future: Future[String] = ask(tenantActor, RegisterPluginConfigurationForTenant(pluginName, pluginConfig)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def unRegisterCallbackNotificationForTenant(): String = {
+    val future: Future[String] = ask(tenantActor, UnRegisterCallbackNotificationForTenant()).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getCallbackNotificationForTenant(): Any = {
+    val future: Future[Any] = ask(tenantActor, GetCallbackNotificationForTenant()).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def registerCallbackNotificationForTenant(callback: String): String = {
+    val future: Future[String] = ask(tenantActor, RegisterCallbackNotificationForTenant(callback)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def createTenant(tenant: Tenant): String = {
+    val future: Future[String] = ask(tenantActor, CreateTenant(tenant)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
   // Catalog
   def getXMLCatalog(): Any = {
     val future: Future[Any] = ask(catalogActor, GetXMLCatalog()).mapTo[Any]

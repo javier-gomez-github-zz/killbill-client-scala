@@ -1,7 +1,5 @@
 package org.killbill.billing.client.model
 
-import java.time.LocalDate
-
 import spray.json.{DefaultJsonProtocol, JsonFormat}
 
 case class Credit(
