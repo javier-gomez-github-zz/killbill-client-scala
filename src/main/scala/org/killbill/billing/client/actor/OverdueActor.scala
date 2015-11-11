@@ -113,5 +113,4 @@ case class OverdueActor(killBillUrl: String, headers: List[HttpHeader]) extends 
         originalSender ! error.getMessage
     }
   }
-
 }

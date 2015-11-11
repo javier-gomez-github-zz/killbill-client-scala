@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.killbill.billing.client.actor.AccountActor._
 import org.killbill.billing.client.actor.BundleActor._
+import org.killbill.billing.client.actor.CatalogActor._
 import org.killbill.billing.client.actor.CreditActor.{CreateCredit, GetCredit}
 import org.killbill.billing.client.actor.CustomFieldActor._
 import org.killbill.billing.client.actor.InvoiceActor._
@@ -32,7 +33,7 @@ import scala.concurrent.{Await, Future}
 /**
   * Created by jgomez on 20/10/2015.
  */
-class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializable with Product]) {
+class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializable with scala.Product]) {
 
   // create the system, log and other shared features
   val system = ActorSystem("killbill-api-scala-client")
@@ -53,10 +54,42 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val paymentGatewayActor = system.actorOf(Props(new PaymentGatewayActor(killBillUrl, headers)), name = "PaymentGatewayActor")
   val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor(killBillUrl, headers)), name = "PaymentMethodActor")
   val customFieldActor = system.actorOf(Props(new CustomFieldActor(killBillUrl, headers)), name = "CustomFieldActor")
+  val catalogActor = system.actorOf(Props(new CatalogActor(killBillUrl, headers)), name = "CatalogActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Catalog
+  def getXMLCatalog(): Any = {
+    val future: Future[Any] = ask(catalogActor, GetXMLCatalog()).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def getJSONCatalog(): Any = {
+    val future: Future[Any] = ask(catalogActor, GetJSONCatalog()).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def uploadXMLCatalog(xmlCatalog: String): String = {
+    val future: Future[String] = ask(catalogActor, UploadXMLCatalog(xmlCatalog)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def getAvailableBasePlans(): List[Any] = {
+    val future: Future[List[Any]] = ask(catalogActor, GetAvailableBasePlans()).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getAvailableAddons(baseProductName: String = ""): List[Any] = {
+    val future: Future[List[Any]] = ask(catalogActor, GetAvailableAddons(baseProductName)).mapTo[List[Any]]
+    Await.result(future, timeout.duration)
+  }
+
+  def getSimpleCatalog(): Any = {
+    val future: Future[Any] = ask(catalogActor, GetSimpleCatalog()).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
   // Custom Fields
   def deletePaymentMethodCustomFields(paymentMethodId: UUID, customFields: List[UUID] = List[UUID]()): String = {
     val future: Future[String] = ask(customFieldActor, DeletePaymentMethodCustomFields(paymentMethodId, customFields)).mapTo[String]
