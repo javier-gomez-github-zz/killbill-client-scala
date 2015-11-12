@@ -4,7 +4,7 @@ name := "killbill-api-client-scala"
 
 version := "0.1"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.7"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -13,19 +13,16 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= {
-  val sprayVersion = "1.2-RC4"
-  val akkaVersion = "2.2.3"
+  val sprayVersion = "1.3.2"
+  val akkaVersion = "2.4.0"
   Seq(
-  "io.spray" % "spray-can" % sprayVersion,
-  "io.spray" % "spray-routing" % sprayVersion,
-  "io.spray" % "spray-testkit" % sprayVersion,
-  "io.spray" % "spray-client" % sprayVersion,
-  "io.spray" %%  "spray-json" % "1.2.5",
-  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-  "ch.qos.logback" % "logback-classic" % "1.0.12",
-  "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
+    "io.spray" % "spray-can_2.11" % sprayVersion,
+    "io.spray" % "spray-routing_2.11" % sprayVersion,
+    "io.spray" % "spray-client_2.11" % sprayVersion,
+    "io.spray" % "spray-json_2.11" % sprayVersion,
+    "ch.qos.logback" % "logback-classic" % "1.1.3",
+    "org.scalatest" % "scalatest_2.11" % "2.2.5" % "test",
+    "com.typesafe.akka" % "akka-actor_2.11" % akkaVersion
   )
 }
 
