@@ -20,7 +20,8 @@ import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodByEx
 import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodById
 import org.killbill.billing.client.actor.PaymentMethodActor.UpdatePaymentMethod
 import org.killbill.billing.client.actor.PaymentMethodActor._
-import org.killbill.billing.client.actor.SecurityActor.GetPermissions
+import org.killbill.billing.client.actor.PluginActor._
+import org.killbill.billing.client.actor.SecurityActor._
 import org.killbill.billing.client.actor.SubscriptionActor._
 import org.killbill.billing.client.actor.TagActor._
 import org.killbill.billing.client.actor.TagDefinitionActor._
@@ -59,11 +60,68 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
   val catalogActor = system.actorOf(Props(new CatalogActor(killBillUrl, headers)), name = "CatalogActor")
   val tenantActor = system.actorOf(Props(new TenantActor(killBillUrl, headers)), name = "TenantActor")
   val securityActor = system.actorOf(Props(new SecurityActor(killBillUrl, headers)), name = "SecurityActor")
+  val pluginActor = system.actorOf(Props(new PluginActor(killBillUrl, headers)), name = "PluginActor")
 
   /**
   Public methods to connect to the KillBill API
    */
+  // Plugins
+  def pluginOptions(uri: String): Any = {
+    val future: Future[Any] = ask(pluginActor, PluginOptions(uri)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def pluginDelete(uri: String): Any = {
+    val future: Future[Any] = ask(pluginActor, PluginDelete(uri)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def pluginPut(uri: String, body: String = ""): Any = {
+    val future: Future[Any] = ask(pluginActor, PluginPut(uri, body)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def pluginPost(uri: String, body: String = ""): Any = {
+    val future: Future[Any] = ask(pluginActor, PluginPost(uri, body)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def pluginHead(uri: String): Any = {
+    val future: Future[Any] = ask(pluginActor, PluginHead(uri)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
+  def pluginGet(uri: String): Any = {
+    val future: Future[Any] = ask(pluginActor, PluginGet(uri)).mapTo[Any]
+    Await.result(future, timeout.duration)
+  }
+
   // Security
+  def addRoleDefinition(roleDefinition: RoleDefinition): String = {
+    val future: Future[String] = ask(securityActor, AddRoleDefinition(roleDefinition)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def invalidateUser(userName: String): String = {
+    val future: Future[String] = ask(securityActor, InvalidateUser(userName)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def updateUserRoles(userName: String, newRoles: List[String]): String = {
+    val future: Future[String] = ask(securityActor, UpdateUserRoles(userName, newRoles)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def updateUserPassword(userName: String, newPassword: String): String = {
+    val future: Future[String] = ask(securityActor, UpdateUserPassword(userName, newPassword)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
+  def addUserRoles(userRoles: UserRoles): String = {
+    val future: Future[String] = ask(securityActor, AddUserRoles(userRoles)).mapTo[String]
+    Await.result(future, timeout.duration)
+  }
+
   def getPermissions(): List[Any] = {
     val future: Future[List[Any]] = ask(securityActor, GetPermissions()).mapTo[List[Any]]
     Await.result(future, timeout.duration)
