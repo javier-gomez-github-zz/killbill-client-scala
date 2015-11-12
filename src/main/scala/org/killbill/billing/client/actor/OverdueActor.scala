@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import org.killbill.billing.client.model._
 import spray.client.pipelining._
-import spray.http.{HttpCharset, HttpHeader}
+import spray.http.HttpHeader
 import spray.httpx.SprayJsonSupport
 
 import scala.util.{Failure, Success}

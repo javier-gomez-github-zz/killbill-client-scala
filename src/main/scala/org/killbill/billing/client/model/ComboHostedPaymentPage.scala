@@ -17,8 +17,8 @@ case class ComboHostedPaymentPageResult[T](
 )
 
 object ComboHostedPaymentPageJsonProtocol extends DefaultJsonProtocol {
-  import HostedPaymentPageFieldsJsonProtocol._
   import AccountJsonProtocol._
+  import HostedPaymentPageFieldsJsonProtocol._
   import PaymentMethodJsonProtocol._
   import PluginPropertyJsonProtocol._
   implicit val comboHostedPaymentPageFormat = jsonFormat4(ComboHostedPaymentPage)

@@ -2,7 +2,7 @@ package org.killbill.billing.client.actor
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import org.killbill.billing.client.model._
 import spray.client.pipelining._

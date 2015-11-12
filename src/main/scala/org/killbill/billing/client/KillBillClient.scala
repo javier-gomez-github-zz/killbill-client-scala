@@ -16,9 +16,6 @@ import org.killbill.billing.client.actor.InvoicePaymentActor._
 import org.killbill.billing.client.actor.OverdueActor.{GetOverdueStateForAccount, GetXMLOverdueConfig, UploadXMLOverdueConfig}
 import org.killbill.billing.client.actor.PaymentActor._
 import org.killbill.billing.client.actor.PaymentGatewayActor.{BuildComboFormDescriptor, BuildFormDescriptor, ProcessNotification}
-import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodByExternalKey
-import org.killbill.billing.client.actor.PaymentMethodActor.GetPaymentMethodById
-import org.killbill.billing.client.actor.PaymentMethodActor.UpdatePaymentMethod
 import org.killbill.billing.client.actor.PaymentMethodActor._
 import org.killbill.billing.client.actor.PluginActor._
 import org.killbill.billing.client.actor.SecurityActor._

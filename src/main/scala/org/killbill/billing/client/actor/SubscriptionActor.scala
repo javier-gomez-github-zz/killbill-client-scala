@@ -56,8 +56,8 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
   def createSubscription(originalSender: ActorRef, subscription: Subscription) = {
     log.info("Creating new Subscription...")
 
-    import SubscriptionJsonProtocol._
     import SprayJsonSupport._
+    import SubscriptionJsonProtocol._
 
     val pipeline = sendReceive
 
@@ -104,8 +104,8 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
   def updateSubscription(originalSender: ActorRef, subscription: Subscription, subscriptionId: UUID) = {
     log.info("Updating Subscription..." + subscription.externalKey)
 
-    import SubscriptionJsonProtocol._
     import SprayJsonSupport._
+    import SubscriptionJsonProtocol._
 
     val pipeline = sendReceive
 

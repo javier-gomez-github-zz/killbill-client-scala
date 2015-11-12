@@ -2,7 +2,7 @@ package org.killbill.billing.client.actor
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import org.killbill.billing.client.model._
 import spray.client.pipelining._
@@ -181,8 +181,8 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def createPayment(originalSender: ActorRef, accountId: UUID, paymentMethodId: UUID, paymentTransaction: PaymentTransaction, pluginProperties: Map[String, String]) = {
     log.info("Creating Payment...")
 
-    import ResponseUriJsonProtocol._
     import PaymentTransactionJsonProtocol._
+    import ResponseUriJsonProtocol._
     import SprayJsonSupport._
 
     val pipeline = sendReceive ~> unmarshal[ResponseUriResult[ResponseUri]]
@@ -222,8 +222,8 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
                          pluginProperties: Map[String, String]) = {
     log.info("Creating a new Payment Transaction on an existing (or not) account...")
 
-    import PaymentJsonProtocol._
     import ComboPaymentTransactionJsonProtocol._
+    import PaymentJsonProtocol._
     import SprayJsonSupport._
 
     val pipeline = sendReceive ~> unmarshal[PaymentResult[Payment]]

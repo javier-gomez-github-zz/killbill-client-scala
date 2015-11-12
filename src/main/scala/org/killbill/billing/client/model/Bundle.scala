@@ -19,8 +19,8 @@ case class BundleResult[T](
 )
 
 object BundleJsonProtocol extends DefaultJsonProtocol {
-  import SubscriptionJsonProtocol._
   import BundleTimelineJsonProtocol._
+  import SubscriptionJsonProtocol._
   implicit val bundleFormat = jsonFormat5(Bundle)
   implicit def bundleResultFormat[T :JsonFormat] = jsonFormat5(BundleResult.apply[T])
 }

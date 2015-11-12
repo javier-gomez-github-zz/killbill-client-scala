@@ -117,8 +117,8 @@ case class PaymentMethodActor(killBillUrl: String, headers: List[HttpHeader]) ex
   def createPaymentMethod(originalSender: ActorRef, accountId: UUID, paymentMethod: PaymentMethod, isDefault: Boolean, payAllUnpaidInvoices: Boolean) = {
     log.info("Creating Payment Method...")
 
-    import ResponseUriJsonProtocol._
     import PaymentMethodJsonProtocol._
+    import ResponseUriJsonProtocol._
     import SprayJsonSupport._
 
     val pipeline = sendReceive ~> unmarshal[ResponseUriResult[ResponseUri]]

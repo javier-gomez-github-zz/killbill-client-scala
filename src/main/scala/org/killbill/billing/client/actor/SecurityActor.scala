@@ -54,8 +54,8 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
   def addRoleDefinition(originalSender: ActorRef, roleDefinition: RoleDefinition) = {
     log.info("Add Role definition...")
 
-    import SprayJsonSupport._
     import RoleDefinitionJsonProtocol._
+    import SprayJsonSupport._
 
     val pipeline = sendReceive
 
