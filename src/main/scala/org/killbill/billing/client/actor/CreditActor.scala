@@ -23,9 +23,11 @@ case class CreditActor(killBillUrl: String, headers: List[HttpHeader]) extends A
 
   import CreditActor._
 
+  import system.dispatcher
+  def sendAndReceive = sendReceive
+
   implicit val system = context.system
   val parent = context.parent
-  import system.dispatcher
   val log = Logging(system, getClass)
 
   def receive = {
@@ -34,6 +36,7 @@ case class CreditActor(killBillUrl: String, headers: List[HttpHeader]) extends A
       context.stop(self)
     case CreateCredit(credit) =>
       createCredit(sender, credit)
+      context.stop(self)
   }
 
   def createCredit(originalSender: ActorRef, credit: Credit) = {
@@ -42,7 +45,7 @@ case class CreditActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import CreditJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/credits", credit) ~> addHeaders(headers)
@@ -68,7 +71,7 @@ case class CreditActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import CreditJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[CreditResult[Credit]]
+    val pipeline = sendAndReceive ~> unmarshal[CreditResult[Credit]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/credits/$creditId") ~> addHeaders(headers)
