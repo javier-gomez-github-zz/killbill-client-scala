@@ -1,5 +1,6 @@
 package org.killbill.billing.client.actor
 
+import java.io.InputStream
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -14,6 +15,7 @@ import spray.http._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
+import scala.io.Source
 
 /**
   * Created by jgomez on 16/11/2015.
@@ -21,25 +23,19 @@ import scala.concurrent.{Await, Future, Promise}
 class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with Mockito {
   import CreditActor._
 
-  implicit val timeout = Timeout(Duration(30, TimeUnit.SECONDS))
+  implicit val timeout = Timeout(Duration(10, TimeUnit.SECONDS))
   val mockResponse = mock[HttpResponse]
   val mockStatus = mock[StatusCode]
   mockResponse.status returns mockStatus
   mockStatus.isSuccess returns true
 
+  // Test Get Credit by Id method
   def getCreditTest() = {
-    val jsonResponse = """
-    {
-       "creditAmount" : 60,
-       "invoiceId" : "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
-       "invoiceNumber": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
-       "effectiveDate": "2015-11-15",
-       "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c"
-    }
-               """
 
-    val body = HttpEntity(MediaTypes.`application/json`, jsonResponse.getBytes())
-    mockResponse.entity returns body
+    val getCreditStream: InputStream = getClass.getResourceAsStream("/getCreditResponse.json")
+    val getCreditJsonContent = Source.fromInputStream(getCreditStream, "UTF-8").getLines.mkString
+    val getCreditBodyResponse = HttpEntity(MediaTypes.`application/json`, getCreditJsonContent.getBytes())
+    mockResponse.entity returns getCreditBodyResponse
 
     val creditActor = system.actorOf(Props(new CreditActor("AnyUrl", mock[List[HttpHeader]]) {
       override def sendAndReceive = {
