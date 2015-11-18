@@ -12,6 +12,7 @@ import org.killbill.billing.client.model.Credit
 import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationLike
 import spray.http._
+import spray.httpx.UnsuccessfulResponseException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -24,10 +25,10 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
 
   import CreditActor._
 
-  implicit val timeout = Timeout(Duration(5, TimeUnit.SECONDS))
+  implicit val timeout = Timeout(Duration(10, TimeUnit.SECONDS))
 
-  // Test Get Credit by Id method
-  def getCreditTest() = {
+  // Test Get Credit by Id Success Response
+  def getCreditSuccessResponseTest() = {
     val mockResponse = mock[HttpResponse]
     val mockStatus = mock[StatusCode]
     mockResponse.status returns mockStatus
@@ -54,10 +55,37 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
     }
   }
 
-  // Test Create Credit method
-  def createCreditTest() = {
+  def getCreditFailureResponseTest() = {
     val mockResponse = mock[HttpResponse]
     val mockStatus = mock[StatusCode]
+    val mockFailureResponse = mock[UnsuccessfulResponseException]
+    val expectedErrorMessage = "Error"
+
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns false
+    mockFailureResponse.getMessage returns expectedErrorMessage
+    mockResponse.entity throws mockFailureResponse
+
+    val creditActor = system.actorOf(Props(new CreditActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "GetCreditWithFailureActor")
+
+    "GetCredit should" >> {
+      "throw an Exception" in {
+        val fut: Future[Any] = ask(creditActor, GetCredit(UUID.randomUUID())).mapTo[Any]
+        val getCreditResponse = Await.result(fut, timeout.duration)
+        getCreditResponse mustEqual expectedErrorMessage
+      }
+    }
+  }
+
+  // Test Create Credit method
+  def createCreditOKResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockStatus.toString() returns "201 Created"
     mockResponse.status returns mockStatus
     mockStatus.isSuccess returns true
 
@@ -81,6 +109,63 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
     }
   }
 
-  getCreditTest()
-  createCreditTest()
+  def createCreditOtherResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockStatus.toString() returns "200"
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns false
+
+    val createCreditBodyResponse = HttpEntity(MediaTypes.`application/json`, "200")
+    mockResponse.entity returns createCreditBodyResponse
+
+    val creditActor = system.actorOf(Props(new CreditActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "CreateOtherCreditActor")
+
+    "CreateCredit should" >> {
+      "return a different status" in {
+        val credit: Credit = Credit.apply(Option.apply(300), None, None, None, Option.apply("570f2248-d85b-4235-975b-23607b2b37db"))
+        val fut: Future[String] = ask(creditActor, CreateCredit(credit)).mapTo[String]
+        val createCreditResponse = Await.result(fut, timeout.duration.+(Duration(10, TimeUnit.SECONDS)))
+        val expected = "200"
+        createCreditResponse mustEqual expected
+      }
+    }
+  }
+
+  def createCreditFailureResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    val mockFailureResponse = mock[UnsuccessfulResponseException]
+    val expectedErrorMessage = "Error"
+
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns false
+    mockFailureResponse.getMessage returns expectedErrorMessage
+    mockResponse.entity throws mockFailureResponse
+
+    val creditActor = system.actorOf(Props(new CreditActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "CreateFailureCreditActor")
+
+    "CreateCredit should" >> {
+      "throw an Exception" in {
+        val credit: Credit = Credit.apply(Option.apply(300), None, None, None, Option.apply("570f2248-d85b-4235-975b-23607b2b37db"))
+        val fut: Future[String] = ask(creditActor, CreateCredit(credit)).mapTo[String]
+        val createCreditResponse = Await.result(fut, timeout.duration)
+        createCreditResponse mustEqual expectedErrorMessage
+      }
+    }
+  }
+
+//  getCreditSuccessResponseTest()
+//  getCreditFailureResponseTest()
+//  createCreditOKResponseTest()
+//  createCreditOtherResponseTest()
+  createCreditFailureResponseTest()
 }
