@@ -1,0 +1,9 @@
+{
+  "name" : "fakeName",
+  "externalMessage" : "externalMessage",
+  "daysBetweenPaymentRetries": [1, 2],
+  "disableEntitlementAndChangesBlocked": false,
+  "blockChanges": false,
+  "isClearState": true,
+  "reevaluationIntervalDays": 5
+}

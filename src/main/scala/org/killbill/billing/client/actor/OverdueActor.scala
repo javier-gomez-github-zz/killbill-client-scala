@@ -28,28 +28,26 @@ case class OverdueActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
-    case UploadXMLOverdueConfig(overdueConfigPath) => {
+    case UploadXMLOverdueConfig(overdueConfigPath) =>
       uploadXMLOverdueConfig(sender, overdueConfigPath)
       context.stop(self)
-    }
 
-    case GetXMLOverdueConfig() => {
+    case GetXMLOverdueConfig() =>
       getXMLOverdueConfig(sender)
       context.stop(self)
-    }
 
-    case GetOverdueStateForAccount(accountId) => {
+    case GetOverdueStateForAccount(accountId) =>
       getOverdueStateForAccount(sender, accountId)
       context.stop(self)
-    }
   }
 
   def uploadXMLOverdueConfig(originalSender: ActorRef, overdueConfigPath: String) = {
     log.info("Uploading XML Overdue Config...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/overdue", overdueConfigPath) ~> addHeaders(headers)
@@ -72,7 +70,7 @@ case class OverdueActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def getXMLOverdueConfig(originalSender: ActorRef) = {
     log.info("Requesting XML Overdue Config...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/overdue") ~> addHeaders(headers)
@@ -99,7 +97,7 @@ case class OverdueActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import OverdueStateJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[OverdueStateResult[OverdueState]]
+    val pipeline = sendAndReceive ~> unmarshal[OverdueStateResult[OverdueState]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/overdue") ~> addHeaders(headers)

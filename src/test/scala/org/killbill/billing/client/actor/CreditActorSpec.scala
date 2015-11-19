@@ -55,6 +55,7 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
     }
   }
 
+  // Test Get Credit by Id Failure Response
   def getCreditFailureResponseTest() = {
     val mockFailureResponse = mock[UnsuccessfulResponseException]
     val expectedErrorMessage = "Error"
@@ -76,7 +77,7 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
     }
   }
 
-  // Test Create Credit method
+  // Test Create Credit Success Response
   def createCreditOKResponseTest() = {
     val mockResponse = mock[HttpResponse]
     val mockStatus = mock[StatusCode]
@@ -97,13 +98,14 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
       "return String response" in {
         val credit: Credit = Credit.apply(Option.apply(300), None, None, None, Option.apply("570f2248-d85b-4235-975b-23607b2b37db"))
         val fut: Future[String] = ask(creditActor, CreateCredit(credit)).mapTo[String]
-        val createCreditResponse = Await.result(fut, timeout.duration.+(Duration(10, TimeUnit.SECONDS)))
+        val createCreditResponse = Await.result(fut, timeout.duration)
         val expected = "201 Created"
         createCreditResponse mustEqual expected
       }
     }
   }
 
+  // Test Create Credit Success Other Response
   def createCreditOtherResponseTest() = {
     val mockResponse = mock[HttpResponse]
     val mockStatus = mock[StatusCode]
@@ -124,13 +126,14 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
       "return a different status" in {
         val credit: Credit = Credit.apply(Option.apply(300), None, None, None, Option.apply("570f2248-d85b-4235-975b-23607b2b37db"))
         val fut: Future[String] = ask(creditActor, CreateCredit(credit)).mapTo[String]
-        val createCreditResponse = Await.result(fut, timeout.duration.+(Duration(10, TimeUnit.SECONDS)))
+        val createCreditResponse = Await.result(fut, timeout.duration)
         val expected = "200"
         createCreditResponse mustEqual expected
       }
     }
   }
 
+  // Test Create Credit Failure Response
   def createCreditFailureResponseTest() = {
     val mockFailureResponse = mock[UnsuccessfulResponseException]
     val expectedErrorMessage = "Error"
