@@ -27,6 +27,7 @@ case class PluginActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case PluginGet(uri) =>
@@ -57,7 +58,7 @@ case class PluginActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def pluginPut(originalSender: ActorRef, uri: String, body: String) = {
     log.info("Plugin Put...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Put(killBillUrl+s"/plugins", body) ~> addHeaders(headers)
@@ -80,7 +81,7 @@ case class PluginActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def pluginPost(originalSender: ActorRef, uri: String, body: String) = {
     log.info("Plugin Post...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/plugins", body) ~> addHeaders(headers)
@@ -121,7 +122,7 @@ case class PluginActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   }
 
   def pluginActions(originalSender: ActorRef, uri: String, action: String) = {
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       action match {
