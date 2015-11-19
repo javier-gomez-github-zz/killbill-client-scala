@@ -56,19 +56,14 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
   }
 
   def getCreditFailureResponseTest() = {
-    val mockResponse = mock[HttpResponse]
-    val mockStatus = mock[StatusCode]
     val mockFailureResponse = mock[UnsuccessfulResponseException]
     val expectedErrorMessage = "Error"
 
-    mockResponse.status returns mockStatus
-    mockStatus.isSuccess returns false
     mockFailureResponse.getMessage returns expectedErrorMessage
-    mockResponse.entity throws mockFailureResponse
 
     val creditActor = system.actorOf(Props(new CreditActor("AnyUrl", mock[List[HttpHeader]]) {
       override def sendAndReceive = {
-        (req:HttpRequest) => Future.apply(mockResponse)
+        (req:HttpRequest) => Future.failed(mockFailureResponse)
       }
     }), name = "GetCreditWithFailureActor")
 
@@ -137,19 +132,14 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
   }
 
   def createCreditFailureResponseTest() = {
-    val mockResponse = mock[HttpResponse]
-    val mockStatus = mock[StatusCode]
     val mockFailureResponse = mock[UnsuccessfulResponseException]
     val expectedErrorMessage = "Error"
 
-    mockResponse.status returns mockStatus
-    mockStatus.isSuccess returns false
     mockFailureResponse.getMessage returns expectedErrorMessage
-    mockResponse.entity throws mockFailureResponse
 
     val creditActor = system.actorOf(Props(new CreditActor("AnyUrl", mock[List[HttpHeader]]) {
       override def sendAndReceive = {
-        (req:HttpRequest) => Future.apply(mockResponse)
+        (req:HttpRequest) => Future.failed(mockFailureResponse)
       }
     }), name = "CreateFailureCreditActor")
 
@@ -163,9 +153,9 @@ class CreditActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
     }
   }
 
-//  getCreditSuccessResponseTest()
-//  getCreditFailureResponseTest()
-//  createCreditOKResponseTest()
-//  createCreditOtherResponseTest()
+  getCreditSuccessResponseTest()
+  getCreditFailureResponseTest()
+  createCreditOKResponseTest()
+  createCreditOtherResponseTest()
   createCreditFailureResponseTest()
 }
