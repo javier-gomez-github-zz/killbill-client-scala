@@ -42,6 +42,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetInvoices(offset, limit, withItems, auditLevel) =>
@@ -116,7 +117,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def getCatalogTranslation(originalSender: ActorRef, locale: String) = {
     log.info("Getting Catalog Translation...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl + s"/invoices/catalogTranslation/$locale") ~> addHeaders(headers)
@@ -140,7 +141,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def uploadCatalogTranslation(originalSender: ActorRef, invoiceTemplate: String, locale: String) = {
     log.info("Uploading Catalog Translation...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl + s"/invoices/catalogTranslation/$locale", invoiceTemplate) ~> addHeaders(headers)
@@ -163,7 +164,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def getInvoiceTranslation(originalSender: ActorRef, locale: String) = {
     log.info("Getting Invoice Translation...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl + s"/invoices/translation/$locale") ~> addHeaders(headers)
@@ -187,7 +188,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def uploadInvoiceTranslation(originalSender: ActorRef, invoiceTemplate: String, locale: String) = {
     log.info("Uploading Invoice Translation...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl + s"/invoices/translation/$locale", invoiceTemplate) ~> addHeaders(headers)
@@ -210,7 +211,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def getInvoiceTemplate(originalSender: ActorRef, manualPay: Boolean) = {
     log.info("Getting Invoice Template...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     var suffixUrl = ""
     if (manualPay) {
@@ -232,7 +233,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def uploadInvoiceTemplate(originalSender: ActorRef, invoiceTemplate: String, manualPay: Boolean) = {
     log.info("Uploading Invoice Template...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     var suffixUrl = ""
     if (manualPay) {
@@ -261,7 +262,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def triggerInvoiceNotification(originalSender: ActorRef, invoiceId: UUID) = {
     log.info("Triggering Invoice Notification Email to Invoice: " + invoiceId.toString)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl + s"/invoices/$invoiceId/emailNotifications") ~> addHeaders(headers)
@@ -287,7 +288,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceItemJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[InvoiceItemResult[InvoiceItem]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[InvoiceItemResult[InvoiceItem]]]
 
     var suffixUrl = ""
     if (!requestedDate.equalsIgnoreCase("")) {
@@ -311,7 +312,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceItemJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     var suffixUrl = ""
     if (!requestedDate.equalsIgnoreCase("")) {
@@ -342,7 +343,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceDryRunJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/invoices/dryRun?accountId=$accountId&targetDate=$futureDate", dryRunInfo) ~> addHeaders(headers)
@@ -365,7 +366,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def createInvoice(originalSender: ActorRef, accountId: UUID, futureDate: String) = {
     log.info("Creating new Invoice...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/invoices?accountId=$accountId&targetDate=$futureDate") ~> addHeaders(headers)
@@ -391,7 +392,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[InvoiceResult[Invoice]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[InvoiceResult[Invoice]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/invoices/search/$searchKey?offset=$offset&limit=$limit&withItems=$withItems&audit=$auditLevel") ~> addHeaders(headers)
@@ -410,7 +411,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[InvoiceResult[Invoice]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[InvoiceResult[Invoice]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/invoices?withItems=$withItems&unpaidInvoicesOnly=$unpaidInvoicesOnly&audit=$auditLevel") ~> addHeaders(headers)
@@ -429,7 +430,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[InvoiceResult[Invoice]]
+    val pipeline = sendAndReceive ~> unmarshal[InvoiceResult[Invoice]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/invoices/$invoiceIdOrNumber/?withItems=$withItems&audit=$audit") ~> addHeaders(headers)
@@ -451,7 +452,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[InvoiceResult[Invoice]]
+    val pipeline = sendAndReceive ~> unmarshal[InvoiceResult[Invoice]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/invoices/$invoiceNumber/?withItems=$withItems&audit=$audit") ~> addHeaders(headers)
@@ -473,7 +474,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[InvoiceResult[Invoice]]
+    val pipeline = sendAndReceive ~> unmarshal[InvoiceResult[Invoice]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/invoices/$invoiceId/?withItems=$withItems&audit=$audit") ~> addHeaders(headers)
@@ -495,7 +496,7 @@ case class InvoiceActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import InvoiceJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[InvoiceResult[Invoice]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[InvoiceResult[Invoice]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/invoices/pagination?offset=$offset&limit=$limit&withItems=$withItems&audit=$auditLevel") ~> addHeaders(headers)
