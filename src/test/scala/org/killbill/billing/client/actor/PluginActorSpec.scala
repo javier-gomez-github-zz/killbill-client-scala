@@ -23,158 +23,218 @@ class PluginActorSpec extends TestKit(ActorSystem()) with SpecificationLike with
 
   implicit val timeout = Timeout(Duration(10, TimeUnit.SECONDS))
 
-  // Test PluginGet Success Response
-  def pluginGetSuccessResponseTest() = {
+  def pluginCommonActionsSuccessAndOtherResponse(statusCode: String, actorName: String, actionName: String) = {
     val mockResponse = mock[HttpResponse]
     val mockStatus = mock[StatusCode]
-    mockStatus.toString() returns "201"
+    mockStatus.toString() returns statusCode
     mockResponse.status returns mockStatus
     mockStatus.isSuccess returns false
 
-    val pluginGetBodyResponse = HttpEntity(MediaTypes.`application/json`, "201")
-    mockResponse.entity returns pluginGetBodyResponse
+    val pluginBodyResponse = HttpEntity(MediaTypes.`application/json`, statusCode)
+    mockResponse.entity returns pluginBodyResponse
 
     val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
       override def sendAndReceive = {
         (req:HttpRequest) => Future.apply(mockResponse)
       }
-    }), name = "PluginGetActor")
+    }), name = actorName + "Actor")
 
-    "PluginGet should" >> {
+    actionName + " should" >> {
       "return a Response" in {
-        val fut: Future[Any] = ask(pluginActor, PluginGet("anyUri")).mapTo[Any]
-        val pluginGetResponse = Await.result(fut, timeout.duration)
-        pluginGetResponse mustEqual mockResponse
+        actionName match {
+          case "PluginGet" => {
+            val fut: Future[Any] = ask(pluginActor, PluginGet("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual mockResponse
+          }
+          case "PluginHead" => {
+            val fut: Future[Any] = ask(pluginActor, PluginHead("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual mockResponse
+          }
+          case "PluginOptions" => {
+            val fut: Future[Any] = ask(pluginActor, PluginOptions("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual mockResponse
+          }
+          case "PluginDelete" => {
+            val fut: Future[Any] = ask(pluginActor, PluginDelete("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual mockResponse
+          }
+        }
       }
     }
   }
 
-  // Test PluginGet Other Response
-  def pluginGetOtherResponseTest() = {
+  def pluginCommonActionsFailureResponse(actorName: String, actionName: String) = {
+    val mockFailureResponse = mock[UnsuccessfulResponseException]
+    val expectedErrorMessage = "Error"
+
+    mockFailureResponse.getMessage returns expectedErrorMessage
+
+    val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.failed(mockFailureResponse)
+      }
+    }), name = actorName + "FailureActor")
+
+    actionName + " should" >> {
+      "throw an Exception" in {
+        actionName match {
+          case "PluginGet" => {
+            val fut: Future[Any] = ask(pluginActor, PluginGet("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual expectedErrorMessage
+          }
+          case "PluginHead" => {
+            val fut: Future[Any] = ask(pluginActor, PluginHead("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual expectedErrorMessage
+          }
+          case "PluginOptions" => {
+            val fut: Future[Any] = ask(pluginActor, PluginOptions("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual expectedErrorMessage
+          }
+          case "PluginDelete" => {
+            val fut: Future[Any] = ask(pluginActor, PluginDelete("anyUri")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual expectedErrorMessage
+          }
+          case "PluginPost" => {
+            val fut: Future[Any] = ask(pluginActor, PluginPost("anyUri", "anyBody")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual expectedErrorMessage
+          }
+          case "PluginPut" => {
+            val fut: Future[Any] = ask(pluginActor, PluginPut("anyUri", "anyBody")).mapTo[Any]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            pluginResponse mustEqual expectedErrorMessage
+          }
+        }
+      }
+    }
+  }
+
+  def pluginPutPostCommonActions(statusCode: String, actorName: String, actionName: String) = {
     val mockResponse = mock[HttpResponse]
     val mockStatus = mock[StatusCode]
-    mockStatus.toString() returns "200"
+    mockStatus.toString() returns statusCode
     mockResponse.status returns mockStatus
-    mockStatus.isSuccess returns false
+    mockStatus.isSuccess returns true
 
-    val pluginGetBodyResponse = HttpEntity(MediaTypes.`application/json`, "200")
-    mockResponse.entity returns pluginGetBodyResponse
+    val pluginResponseBody = HttpEntity(MediaTypes.`application/json`, statusCode)
+    mockResponse.entity returns pluginResponseBody
 
     val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
       override def sendAndReceive = {
         (req:HttpRequest) => Future.apply(mockResponse)
       }
-    }), name = "PluginGetOtherActor")
+    }), name = actorName + "Actor")
 
-    "PluginGet should" >> {
-      "return a Response" in {
-        val fut: Future[Any] = ask(pluginActor, PluginGet("anyUri")).mapTo[Any]
-        val pluginGetResponse = Await.result(fut, timeout.duration)
-        pluginGetResponse mustEqual mockResponse
+    actionName + " should" >> {
+      "return a " + statusCode + " status" in {
+        actionName match {
+          case "PluginPost" => {
+            val fut: Future[String] = ask(pluginActor, PluginPost("anyUri", "anyBody")).mapTo[String]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            val expected = statusCode
+            pluginResponse mustEqual expected
+          }
+          case "PluginPut" => {
+            val fut: Future[String] = ask(pluginActor, PluginPut("anyUri", "anyBody")).mapTo[String]
+            val pluginResponse = Await.result(fut, timeout.duration)
+            val expected = statusCode
+            pluginResponse mustEqual expected
+          }
+        }
       }
     }
+  }
+
+  // Test PluginGet Success Response
+  def pluginGetSuccessResponseTest() = {
+    pluginCommonActionsSuccessAndOtherResponse("201", "PluginGet", "PluginGet")
   }
 
   // Test PluginGet Failure Response
   def pluginGetFailureResponseTest() = {
-    val mockFailureResponse = mock[UnsuccessfulResponseException]
-    val expectedErrorMessage = "Error"
-
-    mockFailureResponse.getMessage returns expectedErrorMessage
-
-    val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
-      override def sendAndReceive = {
-        (req:HttpRequest) => Future.failed(mockFailureResponse)
-      }
-    }), name = "PluginGetFailureActor")
-
-    "PluginGet should" >> {
-      "throw an Exception" in {
-        val fut: Future[Any] = ask(pluginActor, PluginGet("anyUri")).mapTo[Any]
-        val pluginGetResponse = Await.result(fut, timeout.duration)
-        pluginGetResponse mustEqual expectedErrorMessage
-      }
-    }
+    pluginCommonActionsFailureResponse("PluginGetFailure", "PluginGet")
   }
 
   // Test PluginHead Success Response
   def pluginHeadSuccessResponseTest() = {
-    val mockResponse = mock[HttpResponse]
-    val mockStatus = mock[StatusCode]
-    mockStatus.toString() returns "201"
-    mockResponse.status returns mockStatus
-    mockStatus.isSuccess returns false
-
-    val pluginHeadBodyResponse = HttpEntity(MediaTypes.`application/json`, "201")
-    mockResponse.entity returns pluginHeadBodyResponse
-
-    val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
-      override def sendAndReceive = {
-        (req:HttpRequest) => Future.apply(mockResponse)
-      }
-    }), name = "PluginHeadActor")
-
-    "PluginHead should" >> {
-      "return a Response" in {
-        val fut: Future[Any] = ask(pluginActor, PluginHead("anyUri")).mapTo[Any]
-        val pluginHeadResponse = Await.result(fut, timeout.duration)
-        pluginHeadResponse mustEqual mockResponse
-      }
-    }
-  }
-
-  // Test PluginHead Other Response
-  def pluginHeadOtherResponseTest() = {
-    val mockResponse = mock[HttpResponse]
-    val mockStatus = mock[StatusCode]
-    mockStatus.toString() returns "200"
-    mockResponse.status returns mockStatus
-    mockStatus.isSuccess returns false
-
-    val pluginHeadBodyResponse = HttpEntity(MediaTypes.`application/json`, "200")
-    mockResponse.entity returns pluginHeadBodyResponse
-
-    val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
-      override def sendAndReceive = {
-        (req:HttpRequest) => Future.apply(mockResponse)
-      }
-    }), name = "PluginHeadOtherActor")
-
-    "PluginHead should" >> {
-      "return a Response" in {
-        val fut: Future[Any] = ask(pluginActor, PluginHead("anyUri")).mapTo[Any]
-        val pluginHeadResponse = Await.result(fut, timeout.duration)
-        pluginHeadResponse mustEqual mockResponse
-      }
-    }
+    pluginCommonActionsSuccessAndOtherResponse("201", "PluginHead", "PluginHead")
   }
 
   // Test PluginHead Failure Response
   def pluginHeadFailureResponseTest() = {
-    val mockFailureResponse = mock[UnsuccessfulResponseException]
-    val expectedErrorMessage = "Error"
+    pluginCommonActionsFailureResponse("PluginHeadFailure", "PluginHead")
+  }
 
-    mockFailureResponse.getMessage returns expectedErrorMessage
+  // Test PluginOptions Success Response
+  def pluginOptionsSuccessResponseTest() = {
+    pluginCommonActionsSuccessAndOtherResponse("201", "PluginOptions", "PluginOptions")
+  }
 
-    val pluginActor = system.actorOf(Props(new PluginActor("AnyUrl", mock[List[HttpHeader]]) {
-      override def sendAndReceive = {
-        (req:HttpRequest) => Future.failed(mockFailureResponse)
-      }
-    }), name = "PluginHeadFailureActor")
+  // Test PluginOptions Failure Response
+  def pluginOptionsFailureResponseTest() = {
+    pluginCommonActionsFailureResponse("PluginOptionsFailure", "PluginOptions")
+  }
 
-    "PluginHead should" >> {
-      "throw an Exception" in {
-        val fut: Future[Any] = ask(pluginActor, PluginHead("anyUri")).mapTo[Any]
-        val pluginHeadResponse = Await.result(fut, timeout.duration)
-        pluginHeadResponse mustEqual expectedErrorMessage
-      }
-    }
+  // Test PluginDelete Success Response
+  def pluginDeleteSuccessResponseTest() = {
+    pluginCommonActionsSuccessAndOtherResponse("201", "PluginDelete", "PluginDelete")
+  }
+
+  // Test PluginDelete Failure Response
+  def pluginDeleteFailureResponseTest() = {
+    pluginCommonActionsFailureResponse("PluginDeleteFailure", "PluginDelete")
+  }
+
+  // Test PluginPost Success Response
+  def pluginPostSuccessResponseTest() = {
+    pluginPutPostCommonActions("201", "PluginPost", "PluginPost")
+  }
+
+  // Test PluginPost Other Response Response
+  def pluginPostOtherResponseTest() = {
+    pluginPutPostCommonActions("200", "PluginPostOtherResponse", "PluginPost")
+  }
+
+  // Test PluginPost Failure Response
+  def pluginPostFailureResponseTest() = {
+    pluginCommonActionsFailureResponse("PluginPostFailure", "PluginPost")
+  }
+
+  // Test PluginPost Success Response
+  def pluginPutSuccessResponseTest() = {
+    pluginPutPostCommonActions("201", "PluginPut", "PluginPut")
+  }
+
+  // Test PluginPost Other Response Response
+  def pluginPutOtherResponseTest() = {
+    pluginPutPostCommonActions("200", "PluginPutOtherResponse", "PluginPut")
+  }
+
+  // Test PluginPut Failure Response
+  def pluginPutFailureResponseTest() = {
+    pluginCommonActionsFailureResponse("PluginPutFailure", "PluginPut")
   }
 
   pluginGetSuccessResponseTest()
-  pluginGetOtherResponseTest()
   pluginGetFailureResponseTest()
   pluginHeadSuccessResponseTest()
-  pluginHeadOtherResponseTest()
   pluginHeadFailureResponseTest()
+  pluginOptionsSuccessResponseTest()
+  pluginOptionsFailureResponseTest()
+  pluginDeleteSuccessResponseTest()
+  pluginDeleteFailureResponseTest()
+  pluginPutSuccessResponseTest()
+  pluginPutOtherResponseTest()
+  pluginPutFailureResponseTest()
+  pluginPostSuccessResponseTest()
+  pluginPostOtherResponseTest()
+  pluginPostFailureResponseTest()
 }
