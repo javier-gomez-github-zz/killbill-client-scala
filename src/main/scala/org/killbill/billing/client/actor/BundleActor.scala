@@ -32,6 +32,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetBundles(offset, limit, auditLevel) => {
@@ -71,7 +72,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import BundleJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[BundleResult[Bundle]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[BundleResult[Bundle]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/bundles/pagination?offset=$offset&limit=$limit&audit="+auditLevel) ~> addHeaders(headers)
@@ -90,7 +91,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import BundleJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[BundleResult[Bundle]]
+    val pipeline = sendAndReceive ~> unmarshal[BundleResult[Bundle]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/bundles/$bundleId") ~> addHeaders(headers)
@@ -110,7 +111,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import BundleJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[BundleResult[Bundle]]
+    val pipeline = sendAndReceive ~> unmarshal[BundleResult[Bundle]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/bundles?externalKey=$externalKey") ~> addHeaders(headers)
@@ -130,7 +131,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import BundleJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[BundleResult[Bundle]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[BundleResult[Bundle]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/bundles/search/$searchKey?offset=$offset&limit=$limit&audit=$auditLevel") ~> addHeaders(headers)
@@ -149,7 +150,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import BundleJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[BundleResult[Bundle]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[BundleResult[Bundle]]]
 
     var suffixUrl = ""
     if (!externalKey.equalsIgnoreCase("")) {
@@ -173,7 +174,7 @@ case class BundleActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import BundleJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Put(killBillUrl+s"/bundles/$bundleId?billingPolicy=$billingActionPolicy", bundle) ~> addHeaders(headers)
