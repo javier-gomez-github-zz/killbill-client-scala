@@ -28,3 +28,5 @@ libraryDependencies ++= {
 }
 
 exportJars := true
+
+jacoco.settings
