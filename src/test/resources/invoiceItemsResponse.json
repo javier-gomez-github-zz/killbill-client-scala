@@ -1,0 +1,36 @@
+[
+  {
+    "invoiceItemId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "invoiceId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "linkedInvoiceItemId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "bundleId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "subscriptionId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "planName": "planName",
+    "phaseName": "phaseName",
+    "usageName": "usageName",
+    "itemType": "itemType",
+    "description": "description",
+    "startDate": "2015-11-10",
+    "endDate": "2077-11-10",
+    "amount": 100,
+    "currency": "USD"
+  },
+  {
+    "invoiceItemId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "invoiceId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "linkedInvoiceItemId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "bundleId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "subscriptionId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "planName": "planName2",
+    "phaseName": "phaseName2",
+    "usageName": "usageName2",
+    "itemType": "itemType2",
+    "description": "description2",
+    "startDate": "2015-11-10",
+    "endDate": "2077-11-10",
+    "amount": 200,
+    "currency": "USD"
+  }
+]

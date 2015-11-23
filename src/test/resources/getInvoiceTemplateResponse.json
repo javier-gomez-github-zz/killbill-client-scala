@@ -1,0 +1,15 @@
+{
+  "amount": 45,
+  "currency": "USD",
+  "invoiceId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+  "invoiceDate": "2015-11-20",
+  "targetDate": "2015-11-25",
+  "invoiceNumber": "2",
+  "balance": 10,
+  "creditAdj": 0,
+  "refundAdj": 0,
+  "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+  "items": [],
+  "bundleKeys": "bundleKey",
+  "credits": []
+}
