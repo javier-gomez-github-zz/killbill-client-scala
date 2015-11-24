@@ -1,0 +1,32 @@
+[
+  {
+    "targetInvoiceId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "paymentId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "paymentNumber": "1",
+    "paymentExternalKey": "externalKey",
+    "authAmount": 100,
+    "capturedAmount": 0,
+    "purchasedAmount": 10,
+    "refundedAmount": 0,
+    "creditedAmount": 0,
+    "currency": "USD",
+    "paymentMethodId": "paymentMethodId",
+    "transactions": []
+  },
+  {
+    "targetInvoiceId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "paymentId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "paymentNumber": "2",
+    "paymentExternalKey": "externalKey2",
+    "authAmount": 100,
+    "capturedAmount": 0,
+    "purchasedAmount": 10,
+    "refundedAmount": 0,
+    "creditedAmount": 0,
+    "currency": "USD",
+    "paymentMethodId": "paymentMethodId2",
+    "transactions": []
+  }
+]

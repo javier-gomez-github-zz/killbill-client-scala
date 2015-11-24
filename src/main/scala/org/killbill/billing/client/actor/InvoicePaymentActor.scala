@@ -18,7 +18,7 @@ object InvoicePaymentActor {
   case class GetInvoicePaymentsForAccount(accountId: UUID, auditLevel: String, withPluginInfo: String)
   case class GetInvoicePayment(invoiceId: UUID)
   case class PayAllInvoices(accountId: UUID, externalPayment: Boolean, paymentAmount: BigDecimal)
-  case class CreateInvoicePayment(invoiceId: UUID, invoicePaymet: InvoicePayment, isExternal: Boolean)
+  case class CreateInvoicePayment(invoiceId: UUID, invoicePayment: InvoicePayment, isExternal: Boolean)
   case class CreateInvoicePaymentRefund(paymentId: UUID, refundTransaction: InvoicePaymentTransaction)
   case class CreateInvoicePaymentChargeback(paymentId: UUID, chargebackTransaction: InvoicePaymentTransaction)
 
@@ -32,6 +32,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetInvoicePaymentsForAccount(accountId, auditLevel, withPluginInfo) =>
@@ -65,7 +66,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
     import InvoicePaymentTransactionJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/invoicePayments/$paymentId/chargebacks", chargebackTransaction) ~> addHeaders(headers)
@@ -91,7 +92,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
     import InvoicePaymentTransactionJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/invoicePayments/$paymentId/refunds", refundTransaction) ~> addHeaders(headers)
@@ -117,7 +118,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
     import InvoicePaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/invoices/$invoiceId/payments", invoicePayment) ~> addHeaders(headers)
@@ -140,7 +141,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
   def payAllInvoices(originalSender: ActorRef, accountId: UUID, externalPayment: Boolean, paymentAmount: BigDecimal) = {
     log.info("Attempting to Pay All Invoices for Account: " + accountId.toString)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     var suffixUrl = ""
     if (paymentAmount != null) {
@@ -171,7 +172,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
     import InvoicePaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[InvoicePaymentResult[InvoicePayment]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[InvoicePaymentResult[InvoicePayment]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/invoices/$invoiceId/payments") ~> addHeaders(headers)
@@ -190,7 +191,7 @@ case class InvoicePaymentActor(killBillUrl: String, headers: List[HttpHeader]) e
     import InvoicePaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[InvoicePaymentResult[InvoicePayment]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[InvoicePaymentResult[InvoicePayment]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/invoicePayments?audit=$auditLevel&withPluginInfo=$withPluginInfo") ~> addHeaders(headers)
