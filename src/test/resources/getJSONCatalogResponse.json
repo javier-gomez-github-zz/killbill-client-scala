@@ -1,0 +1,8 @@
+{
+  "clock": {
+    "utcnow": "2015-11-24T18:17:42.000Z",
+    "utctoday": "2015-11-24"
+  },
+  "catalogName": "Catalog",
+  "recurringBillingMode": "IN_ADVANCE"
+}

@@ -19,7 +19,7 @@ import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 /**
-  * Created by jgomez on 20/11/2015.
+  * Created by jgomez on 23/11/2015.
   */
 class AccountActorSpec extends TestKit(ActorSystem()) with SpecificationLike with Mockito {
 

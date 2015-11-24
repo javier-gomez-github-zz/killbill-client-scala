@@ -30,6 +30,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetSimpleCatalog() =>
@@ -60,7 +61,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def getJSONCatalog(originalSender: ActorRef) = {
     log.info("Getting JSON Catalog...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/catalog") ~> addHeaders(headers) ~> addHeader(Accept(MediaRange.apply(MediaTypes.`application/json`)))
@@ -76,7 +77,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def getXMLCatalog(originalSender: ActorRef) = {
     log.info("Getting XML Catalog...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/catalog") ~> addHeaders(headers) ~> addHeader(Accept(MediaRange.apply(MediaTypes.`application/xml`)))
@@ -92,7 +93,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   def uploadXMLCatalog(originalSender: ActorRef, xmlCatalog: String) = {
     log.info("Uploading XML Catalog...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/catalog", HttpEntity(MediaTypes.`application/xml`, xmlCatalog)) ~> addHeaders(headers)
@@ -118,7 +119,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PlanDetailJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[PlanDetailResult[PlanDetail]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[PlanDetailResult[PlanDetail]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/catalog/availableBasePlans") ~> addHeaders(headers)
@@ -137,7 +138,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PlanDetailJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[PlanDetailResult[PlanDetail]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[PlanDetailResult[PlanDetail]]]
 
     var suffixUrl = ""
     if (!baseProductName.equalsIgnoreCase("")) {
@@ -161,7 +162,7 @@ case class CatalogActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import CatalogJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[CatalogResult[Catalog]]
+    val pipeline = sendAndReceive ~> unmarshal[CatalogResult[Catalog]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/catalog/simpleCatalog") ~> addHeaders(headers)

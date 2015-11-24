@@ -1,0 +1,16 @@
+[
+  {
+    "product": "product",
+    "plan": "plan",
+    "finalPhaseBillingPeriod": "MONTHLY",
+    "priceList": "priceList",
+    "finalPhaseRecurringPrice": []
+  },
+  {
+    "product": "product2",
+    "plan": "plan2",
+    "finalPhaseBillingPeriod": "QUARTERLY",
+    "priceList": "priceList2",
+    "finalPhaseRecurringPrice": []
+  }
+]
