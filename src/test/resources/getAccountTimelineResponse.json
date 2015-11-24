@@ -1,0 +1,29 @@
+{
+  "account": {
+    "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "externalKey": "externalKey",
+    "accountCBA": 0,
+    "accountBalance": 0,
+    "name": "name",
+    "firstNameLength": 0,
+    "email": "email",
+    "billCycleDayLocal": 10,
+    "currency": "USD",
+    "paymentMethodId": "paymentMethodId",
+    "timeZone": "UTC",
+    "address1": "address1",
+    "address2": "address2",
+    "postalCode": "postalCode",
+    "company": "company",
+    "city": "city",
+    "state": "state",
+    "country": "country",
+    "locale": "locale",
+    "phone": "phone",
+    "isMigrated": false,
+    "isNotifiedForInvoices": false
+  },
+  "bundles": [],
+  "invoices": [],
+  "payments": []
+}

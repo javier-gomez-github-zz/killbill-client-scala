@@ -34,6 +34,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetAccountByExternalKey(externalKey, withBalance, withCBA, audit) => {
@@ -102,7 +103,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import InvoiceEmailJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[InvoiceEmailResult[InvoiceEmail]]
+    val pipeline = sendAndReceive ~> unmarshal[InvoiceEmailResult[InvoiceEmail]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/emailNotifications") ~> addHeaders(headers)
@@ -121,7 +122,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import InvoiceEmailJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Put(killBillUrl+s"/accounts/$accountId/emailNotifications", invoiceEmail) ~> addHeaders(headers)
@@ -147,7 +148,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[AccountResult[Account]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[AccountResult[Account]]]
 
     val suffixUrl = "&accountWithBalance=false&accountWithBalanceAndCBA=false&audit=" + auditLevel
 
@@ -168,7 +169,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountEmailJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[AccountEmailResult[AccountEmail]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[AccountEmailResult[AccountEmail]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/emails") ~> addHeaders(headers)
@@ -187,7 +188,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountEmailJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/accounts/$accountId/emails", accountEmail) ~> addHeaders(headers)
@@ -210,7 +211,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
   def removeEmailFromAccount(originalSender: ActorRef, accountId: UUID, email: String) = {
     log.info("Deleting Email " + email + " from Account " + accountId.toString)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/accounts/$accountId/emails/$email") ~> addHeaders(headers)
@@ -236,7 +237,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[AccountResult[Account]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[AccountResult[Account]]]
 
     val suffixUrl = "&accountWithBalance=false&accountWithBalanceAndCBA=false&audit=" + auditLevel
 
@@ -257,7 +258,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[AccountResult[Account]]
+    val pipeline = sendAndReceive ~> unmarshal[AccountResult[Account]]
 
     val suffixUrl = "?accountWithBalance=" + withBalance.toString + "&accountWithBalanceAndCBA=" + withCBA.toString + "&audit=" + audit
 
@@ -282,7 +283,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[AccountResult[Account]]
+    val pipeline = sendAndReceive ~> unmarshal[AccountResult[Account]]
 
     val suffixUrl = "&accountWithBalance=" + withBalance.toString + "&accountWithBalanceAndCBA=" + withCBA.toString + "&audit=" + audit
 
@@ -307,7 +308,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/accounts", account) ~> addHeaders(headers)
@@ -333,7 +334,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Put(killBillUrl+s"/accounts/$accountId", account) ~> addHeaders(headers)
@@ -359,7 +360,7 @@ class AccountActor(killBillUrl: String, headers: List[HttpHeader]) extends Actor
     import AccountTimelineJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[AccountTimelineResult[AccountTimeline]]
+    val pipeline = sendAndReceive ~> unmarshal[AccountTimelineResult[AccountTimeline]]
 
     val suffixUrl = "?audit=" + audit + "&parallel=false"
 
