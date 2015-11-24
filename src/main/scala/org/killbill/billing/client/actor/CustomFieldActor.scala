@@ -33,6 +33,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetCustomFields(offset, limit, auditLevel) =>
@@ -71,7 +72,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
   def deletePaymentMethodCustomFields(originalSender: ActorRef, paymentMethodId: UUID, customFields: List[UUID]) = {
     log.info("Deleting Payment Method Custom Fields...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     var suffixUrl = ""
     if (!customFields.isEmpty) {
@@ -102,7 +103,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
     import CustomFieldJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/paymentMethods/$paymentMethodId/customFields", customFields) ~> addHeaders(headers)
@@ -128,7 +129,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
     import CustomFieldJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/paymentMethods/$paymentMethodId/customFields?audit=$auditLevel") ~> addHeaders(headers)
@@ -144,7 +145,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
   def deleteAccountCustomFields(originalSender: ActorRef, accountId: UUID, customFields: List[UUID]) = {
     log.info("Deleting Account Custom Fields...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     var suffixUrl = ""
     if (!customFields.isEmpty) {
@@ -175,7 +176,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
     import CustomFieldJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/accounts/$accountId/customFields", customFields) ~> addHeaders(headers)
@@ -201,7 +202,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
     import CustomFieldJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/customFields?audit=$auditLevel") ~> addHeaders(headers)
@@ -220,7 +221,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
     import CustomFieldJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/customFields/search/$searchKey?offset=$offset&limit=$limit&audit=$auditLevel") ~> addHeaders(headers)
@@ -239,7 +240,7 @@ case class CustomFieldActor(killBillUrl: String, headers: List[HttpHeader]) exte
     import CustomFieldJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[CustomFieldResult[CustomField]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/customFields/pagination?offset=$offset&limit=$limit&audit="+auditLevel) ~> addHeaders(headers)

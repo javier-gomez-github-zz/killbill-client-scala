@@ -1,0 +1,16 @@
+[
+  {
+    "customFieldId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "objectId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "objectType": "CUSTOM_FIELD",
+    "name": "name",
+    "value": "value"
+  },
+  {
+    "customFieldId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "objectId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "objectType": "CUSTOM_FIELD",
+    "name": "name2",
+    "value": "value2"
+  }
+]
