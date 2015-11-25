@@ -38,6 +38,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetPayments(offset, limit, pluginName, pluginProperties, auditLevel, withPluginInfo) =>
@@ -154,7 +155,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentTransactionJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       action match {
@@ -185,7 +186,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import ResponseUriJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[ResponseUriResult[ResponseUri]]
+    val pipeline = sendAndReceive ~> unmarshal[ResponseUriResult[ResponseUri]]
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/accounts/$accountId/payments", paymentTransaction) ~> addHeaders(headers)
@@ -202,7 +203,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[PaymentResult[Payment]]
+    val pipeline = sendAndReceive ~> unmarshal[PaymentResult[Payment]]
 
     val responseFuture = pipeline {
       Get(uri.asInstanceOf[String]) ~> addHeaders(headers)
@@ -226,7 +227,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[PaymentResult[Payment]]
+    val pipeline = sendAndReceive ~> unmarshal[PaymentResult[Payment]]
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/payments/combo?controlPluginName=$controlPluginNames", comboPaymentTransaction) ~> addHeaders(headers)
@@ -248,7 +249,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[PaymentResult[Payment]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[PaymentResult[Payment]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/accounts/$accountId/payments?audit=$auditLevel") ~> addHeaders(headers)
@@ -267,7 +268,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[PaymentResult[Payment]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[PaymentResult[Payment]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/payments/search/$searchKey?offset=$offset&limit=$limit&audit=$auditLevel&withPluginInfo=$withPluginInfo") ~> addHeaders(headers)
@@ -287,7 +288,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[PaymentResult[Payment]]
+    val pipeline = sendAndReceive ~> unmarshal[PaymentResult[Payment]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/payments/$paymentId/?withPluginInfo=$withPluginInfo&audit=$audit") ~> addHeaders(headers)
@@ -310,7 +311,7 @@ case class PaymentActor(killBillUrl: String, headers: List[HttpHeader]) extends 
     import PaymentJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[PaymentResult[Payment]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[PaymentResult[Payment]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/payments/pagination?offset=$offset&limit=$limit&pluginName=$pluginName&" +
