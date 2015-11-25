@@ -30,6 +30,7 @@ case class PaymentGatewayActor(killBillUrl: String, headers: List[HttpHeader]) e
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case BuildFormDescriptor(fields, kbAccountId, kbPaymentMethodId, pluginProperties) =>
@@ -49,7 +50,7 @@ case class PaymentGatewayActor(killBillUrl: String, headers: List[HttpHeader]) e
   def processNotification(originalSender: ActorRef, notification: String, pluginName: String, pluginProperties: Map[String, String]) = {
     log.info("Processing Notification...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/paymentGateways/notification/$pluginName?pluginProperty=$pluginProperties", notification) ~> addHeaders(headers)
@@ -77,7 +78,7 @@ case class PaymentGatewayActor(killBillUrl: String, headers: List[HttpHeader]) e
     import HostedPaymentPageFormDescriptorJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/paymentGateways/hosted/form/?controlPluginName=$controlPluginNames&pluginProperty=$pluginProperties", comboHostedPaymentPage) ~> addHeaders(headers)
@@ -105,7 +106,7 @@ case class PaymentGatewayActor(killBillUrl: String, headers: List[HttpHeader]) e
     import HostedPaymentPageFormDescriptorJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/paymentGateways/hosted/form/$kbAccountId?paymentMethodId=$kbPaymentMethodId&pluginProperty=$pluginProperties", fields) ~> addHeaders(headers)
