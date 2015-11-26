@@ -30,25 +30,32 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetPermissions() =>
       getPermissions(sender)
+      context.stop(self)
 
     case AddUserRoles(userRoles) =>
       addUserRoles(sender, userRoles)
+      context.stop(self)
 
     case UpdateUserPassword(userName, newPassword) =>
       updateUserPassword(sender, userName, newPassword)
+      context.stop(self)
 
     case UpdateUserRoles(userName, newRoles) =>
       updateUserRoles(sender, userName, newRoles)
+      context.stop(self)
 
     case InvalidateUser(userName) =>
       invalidateUser(sender, userName)
+      context.stop(self)
 
     case AddRoleDefinition(roleDefinition) =>
       addRoleDefinition(sender, roleDefinition)
+      context.stop(self)
   }
 
   def addRoleDefinition(originalSender: ActorRef, roleDefinition: RoleDefinition) = {
@@ -57,7 +64,7 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
     import RoleDefinitionJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/security/roles", roleDefinition) ~> addHeaders(headers)
@@ -80,7 +87,7 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
   def invalidateUser(originalSender: ActorRef, userName: String) = {
     log.info("Invalidating User: " + userName)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/security/users/$userName") ~> addHeaders(headers)
@@ -103,7 +110,7 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
   def updateUserRoles(originalSender: ActorRef, userName: String, newRoles: List[String]) = {
     log.info("Update User Roles...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     import SprayJsonSupport._
     import UserRolesJsonProtocol._
@@ -131,7 +138,7 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
   def updateUserPassword(originalSender: ActorRef, userName: String, newPassword: String) = {
     log.info("Update User Password...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     import SprayJsonSupport._
     import UserRolesJsonProtocol._
@@ -162,7 +169,7 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
     import SprayJsonSupport._
     import UserRolesJsonProtocol._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/security/users", userRoles) ~> addHeaders(headers)
@@ -188,7 +195,7 @@ case class SecurityActor(killBillUrl: String, headers: List[HttpHeader]) extends
     import DefaultJsonProtocol._
     import SprayJsonSupport._
 
-    val pipeline = sendReceive ~> unmarshal[List[String]]
+    val pipeline = sendAndReceive ~> unmarshal[List[String]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/security/permissions") ~> addHeaders(headers)
