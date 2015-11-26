@@ -1,0 +1,20 @@
+{
+  "accountId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+  "bundleId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+  "subscriptionId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+  "externalKey" : "externalKey",
+  "startDate": "2015-11-22",
+  "productName" : "productName",
+  "productCategory": "BASE",
+  "billingPeriod": "ANNUAL",
+  "phaseType": "EVERGREEN",
+  "priceList": "priceList",
+  "state": "ACTIVE",
+  "sourceType": "NATIVE",
+  "cancelledDate": "2015-11-25",
+  "chargedThroughDate": "2015-11-25",
+  "billingStartDate": "2015-11-22",
+  "billingEndDate": "2015-11-25",
+  "events": [],
+  "priceOverrides": []
+}

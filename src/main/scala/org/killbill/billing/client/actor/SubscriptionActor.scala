@@ -30,6 +30,7 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case CreateSubscription(subscription) =>
@@ -59,7 +60,7 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
     import SprayJsonSupport._
     import SubscriptionJsonProtocol._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/subscriptions", subscription) ~> addHeaders(headers)
@@ -85,7 +86,7 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
     import SprayJsonSupport._
     import SubscriptionJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[SubscriptionResult[Subscription]]
+    val pipeline = sendAndReceive ~> unmarshal[SubscriptionResult[Subscription]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/subscriptions/$subscriptionId") ~> addHeaders(headers)
@@ -107,7 +108,7 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
     import SprayJsonSupport._
     import SubscriptionJsonProtocol._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Put(killBillUrl+s"/subscriptions/$subscriptionId", subscription) ~> addHeaders(headers)
@@ -130,7 +131,7 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
   def cancelSubscription(originalSender: ActorRef, subscriptionId: UUID) = {
     log.info("Cancelling Subscription with ID: " + subscriptionId.toString)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/subscriptions/$subscriptionId") ~> addHeaders(headers)
@@ -153,7 +154,7 @@ case class SubscriptionActor(killBillUrl: String, headers: List[HttpHeader]) ext
   def unCancelSubscription(originalSender: ActorRef, subscriptionId: UUID) = {
     log.info("Uncancelling Subscription: " + subscriptionId.toString)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Put(killBillUrl+s"/subscriptions/$subscriptionId/uncancel") ~> addHeaders(headers)

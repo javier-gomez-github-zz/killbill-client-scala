@@ -25,8 +25,8 @@ case class Subscription(
   chargedThroughDate: Option[String],
   billingStartDate: Option[String],
   billingEndDate: Option[String],
-  events: List[EventSubscription],
-  priceOverrides: List[PhasePriceOverride]
+  events: Option[List[EventSubscription]],
+  priceOverrides: Option[List[PhasePriceOverride]]
 )
 
 case class SubscriptionResult[T](
@@ -46,8 +46,8 @@ case class SubscriptionResult[T](
   chargedThroughDate: Option[String],
   billingStartDate: Option[String],
   billingEndDate: Option[String],
-  events: List[EventSubscription],
-  priceOverrides: List[PhasePriceOverride]
+  events: Option[List[EventSubscription]],
+  priceOverrides: Option[List[PhasePriceOverride]]
 )
 
 object SubscriptionJsonProtocol extends DefaultJsonProtocol {
