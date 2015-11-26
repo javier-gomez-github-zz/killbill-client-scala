@@ -14,3 +14,6 @@ hs_err_pid*
 
 # Intelli J
 .idea
+
+# OSX files
+.DS_Store

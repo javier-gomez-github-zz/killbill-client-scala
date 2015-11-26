@@ -301,67 +301,222 @@ class PaymentMethodActorSpec extends TestKit(ActorSystem()) with SpecificationLi
     }
   }
 
-//  // Test Create Payment Success Response
-//  def createPaymentSuccessResponseTest() = {
-//    val mockResponse = mock[HttpResponse]
-//    val mockStatus = mock[StatusCode]
-//    mockResponse.status returns mockStatus
-//    mockStatus.isSuccess returns true
-//    val createPaymentStream: InputStream = getClass.getResourceAsStream("/createPaymentResponse.json")
-//    val createPaymentJsonContent = Source.fromInputStream(createPaymentStream, "UTF-8").getLines.mkString
-//    val createPaymentBodyResponse = HttpEntity(MediaTypes.`application/json`, createPaymentJsonContent.getBytes())
-//    mockResponse.entity returns createPaymentBodyResponse
-//
-//    val PaymentActor = system.actorOf(Props(new PaymentActor("AnyUrl", mock[List[HttpHeader]]) {
-//      override def sendAndReceive = {
-//        (req:HttpRequest) => Future.apply(mockResponse)
-//      }
-//    }), name = "CreatePaymentActor")
-//
-//    "CreatePayment should" >> {
-//      "return Payment object" in {
-//        val paymentTransaction: PaymentTransaction = PaymentTransaction(Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"),
-//          Option("transactionExternalKey"), Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"), Option("paymentExternalKey"),
-//          Option("transactionType"), Option("2015-11-25"), Option("status"), Option(100), Option("USD"),
-//          Option("gatewayErrorCode"), Option("gatewayErrorMsg"), Option("firstPaymentReferenceId"), Option("secondPaymentReferenceId"),
-//          Option(List[PluginProperty]()))
-//        val fut: Future[Any] = ask(PaymentActor, CreatePayment(UUID.randomUUID(), UUID.randomUUID(), paymentTransaction,
-//          any[Map[String, String]])).mapTo[Any]
-//        val createPaymentResponse = Await.result(fut, timeout.duration)
-//        val expected = Payment(None, None, None, None, None, None, None, None, None, None, None, None)
-//        createPaymentResponse mustEqual expected
-//      }
-//    }
-//  }
-//
-//  // Test Create Payment Failure Response
-//  def createPaymentFailureResponseTest() = {
-//    val mockFailureResponse = mock[UnsuccessfulResponseException]
-//    val expectedErrorMessage = "Error"
-//
-//    mockFailureResponse.getMessage returns expectedErrorMessage
-//
-//    val PaymentActor = system.actorOf(Props(new PaymentActor("AnyUrl", mock[List[HttpHeader]]) {
-//      override def sendAndReceive = {
-//        (req:HttpRequest) => Future.failed(mockFailureResponse)
-//      }
-//    }), name = "CreatePaymentFailureActor")
-//
-//    "CreatePayment should" >> {
-//      "throw an Exception" in {
-//        val paymentTransaction: PaymentTransaction = PaymentTransaction(Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"),
-//          Option("transactionExternalKey"), Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"), Option("paymentExternalKey"),
-//          Option("transactionType"), Option("2015-11-25"), Option("status"), Option(100), Option("USD"),
-//          Option("gatewayErrorCode"), Option("gatewayErrorMsg"), Option("firstPaymentReferenceId"), Option("secondPaymentReferenceId"),
-//          Option(List[PluginProperty]()))
-//        val fut: Future[Any] = ask(PaymentActor, CreatePayment(UUID.randomUUID(), UUID.randomUUID(), paymentTransaction,
-//          any[Map[String, String]])).mapTo[Any]
-//        val createPaymentResponse = Await.result(fut, timeout.duration)
-//        createPaymentResponse mustEqual expectedErrorMessage
-//      }
-//    }
-//  }
+  // Test Create Payment Method Success Response
+  def createPaymentMethodSuccessResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns true
+    val createPaymentMethodStream: InputStream = getClass.getResourceAsStream("/createPaymentMethodResponse.json")
+    val createPaymentMethodJsonContent = Source.fromInputStream(createPaymentMethodStream, "UTF-8").getLines.mkString
+    val createPaymentMethodBodyResponse = HttpEntity(MediaTypes.`application/json`, createPaymentMethodJsonContent.getBytes())
+    mockResponse.entity returns createPaymentMethodBodyResponse
 
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "CreatePaymentMethodActor")
+
+    "CreatePaymentMethod should" >> {
+      "return PaymentMethod object" in {
+        val paymentMethod: PaymentMethod = PaymentMethod(Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"),
+          Option("externalKey"), Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"), Option(false),
+          Option("pluginName"), Option(PaymentMethodPluginDetail(Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"),
+          Option(false), Option(List[PluginProperty]()))))
+        val fut: Future[Any] = ask(paymentMethodActor, CreatePaymentMethod(UUID.randomUUID(), paymentMethod, any[Boolean],
+          any[Boolean])).mapTo[Any]
+        val createPaymentResponse = Await.result(fut, timeout.duration)
+        val expected = PaymentMethod(None, None, None, None, None, None)
+        createPaymentResponse mustEqual expected
+      }
+    }
+  }
+
+  // Test Create Payment Failure Response
+  def createPaymentMethodFailureResponseTest() = {
+    val mockFailureResponse = mock[UnsuccessfulResponseException]
+    val expectedErrorMessage = "Error"
+
+    mockFailureResponse.getMessage returns expectedErrorMessage
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.failed(mockFailureResponse)
+      }
+    }), name = "CreatePaymentMethodFailureActor")
+
+    "CreatePaymentMethod should" >> {
+      "throw an Exception" in {
+        val paymentMethod: PaymentMethod = PaymentMethod(Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"),
+          Option("externalKey"), Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"), Option(false),
+          Option("pluginName"), Option(PaymentMethodPluginDetail(Option("b17298d2-37fc-4701-8b9d-92ab1d15f01c"),
+            Option(false), Option(List[PluginProperty]()))))
+        val fut: Future[Any] = ask(paymentMethodActor, CreatePaymentMethod(UUID.randomUUID(), paymentMethod, any[Boolean],
+          any[Boolean])).mapTo[Any]
+        val createPaymentMethodResponse = Await.result(fut, timeout.duration)
+        createPaymentMethodResponse mustEqual expectedErrorMessage
+      }
+    }
+  }
+
+  // Test Update Payment Method Success Response
+  def updatePaymentMethodSuccessResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockStatus.toString() returns "200"
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns true
+
+    val updatePaymentMethodBodyResponse = HttpEntity(MediaTypes.`application/json`, "200")
+    mockResponse.entity returns updatePaymentMethodBodyResponse
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "UpdatePaymentMethodActor")
+
+    "UpdatePaymentMethod should" >> {
+      "return String response" in {
+        val fut: Future[String] = ask(paymentMethodActor, UpdatePaymentMethod(UUID.randomUUID(),
+          UUID.randomUUID(), any[Map[String, String]], any[Boolean])).mapTo[String]
+        val updatePaymentMethodResponse = Await.result(fut, timeout.duration)
+        val expected = "200"
+        updatePaymentMethodResponse mustEqual expected
+      }
+    }
+  }
+
+  // Test Update Payment Method Other Response
+  def updatePaymentMethodOtherResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockStatus.toString() returns "201"
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns false
+
+    val updatePaymentMethodBodyResponse = HttpEntity(MediaTypes.`application/json`, "201")
+    mockResponse.entity returns updatePaymentMethodBodyResponse
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "UpdatePaymentMethodOtherResponseActor")
+
+    "UpdatePaymentMethod should" >> {
+      "return a different status" in {
+        val fut: Future[String] = ask(paymentMethodActor, UpdatePaymentMethod(UUID.randomUUID(),
+          UUID.randomUUID(), any[Map[String, String]], any[Boolean])).mapTo[String]
+        val updatePaymentMethodResponse = Await.result(fut, timeout.duration)
+        val expected = "201"
+        updatePaymentMethodResponse mustEqual expected
+      }
+    }
+  }
+
+  // Test Update Payment Method Failure Response
+  def updatePaymentMethodFailureResponseTest() = {
+    val mockFailureResponse = mock[UnsuccessfulResponseException]
+    val expectedErrorMessage = "Error"
+
+    mockFailureResponse.getMessage returns expectedErrorMessage
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.failed(mockFailureResponse)
+      }
+    }), name = "UpdatePaymentMethodFailureActor")
+
+    "UpdatePaymentMethod should" >> {
+      "throw an Exception" in {
+        val fut: Future[String] = ask(paymentMethodActor, UpdatePaymentMethod(UUID.randomUUID(),
+          UUID.randomUUID(), any[Map[String, String]], any[Boolean])).mapTo[String]
+        val updatePaymentMethodResponse = Await.result(fut, timeout.duration)
+        updatePaymentMethodResponse mustEqual expectedErrorMessage
+      }
+    }
+  }
+
+  // Test Delete Payment Method Success Response
+  def deletePaymentMethodSuccessResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockStatus.toString() returns "200"
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns true
+
+    val deletePaymentMethodBodyResponse = HttpEntity(MediaTypes.`application/json`, "200")
+    mockResponse.entity returns deletePaymentMethodBodyResponse
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "DeletePaymentMethodActor")
+
+    "DeletePaymentMethod should" >> {
+      "return String response" in {
+        val fut: Future[String] = ask(paymentMethodActor, DeletePaymentMethod(UUID.randomUUID(),
+          any[Boolean], any[Map[String, String]])).mapTo[String]
+        val deletePaymentMethodResponse = Await.result(fut, timeout.duration)
+        val expected = "200"
+        deletePaymentMethodResponse mustEqual expected
+      }
+    }
+  }
+
+  // Test Delete Payment Method Other Response
+  def deletePaymentMethodOtherResponseTest() = {
+    val mockResponse = mock[HttpResponse]
+    val mockStatus = mock[StatusCode]
+    mockStatus.toString() returns "201"
+    mockResponse.status returns mockStatus
+    mockStatus.isSuccess returns false
+
+    val deletePaymentMethodBodyResponse = HttpEntity(MediaTypes.`application/json`, "201")
+    mockResponse.entity returns deletePaymentMethodBodyResponse
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.apply(mockResponse)
+      }
+    }), name = "DeletePaymentMethodOtherResponseActor")
+
+    "DeletePaymentMethod should" >> {
+      "return a different status" in {
+        val fut: Future[String] = ask(paymentMethodActor, DeletePaymentMethod(UUID.randomUUID(),
+          any[Boolean], any[Map[String, String]])).mapTo[String]
+        val deletePaymentMethodResponse = Await.result(fut, timeout.duration)
+        val expected = "201"
+        deletePaymentMethodResponse mustEqual expected
+      }
+    }
+  }
+
+  // Test Delete Payment Method Failure Response
+  def deletePaymentMethodFailureResponseTest() = {
+    val mockFailureResponse = mock[UnsuccessfulResponseException]
+    val expectedErrorMessage = "Error"
+
+    mockFailureResponse.getMessage returns expectedErrorMessage
+
+    val paymentMethodActor = system.actorOf(Props(new PaymentMethodActor("AnyUrl", mock[List[HttpHeader]]) {
+      override def sendAndReceive = {
+        (req:HttpRequest) => Future.failed(mockFailureResponse)
+      }
+    }), name = "DeletePaymentMethodFailureActor")
+
+    "DeletePaymentMethod should" >> {
+      "throw an Exception" in {
+        val fut: Future[String] = ask(paymentMethodActor, DeletePaymentMethod(UUID.randomUUID(),
+          any[Boolean], any[Map[String, String]])).mapTo[String]
+        val deletePaymentMethodResponse = Await.result(fut, timeout.duration)
+        deletePaymentMethodResponse mustEqual expectedErrorMessage
+      }
+    }
+  }
 
   getPaymentMethodsSuccessResponseTest()
   getPaymentMethodsFailureResponseTest()
@@ -373,11 +528,12 @@ class PaymentMethodActorSpec extends TestKit(ActorSystem()) with SpecificationLi
   getPaymentMethodByExternalKeyFailureResponseTest()
   getPaymentMethodsForAccountSuccessResponseTest()
   getPaymentMethodsForAccountFailureResponseTest()
-//  createPaymentSuccessResponseTest()
-//  createPaymentFailureResponseTest()
-//  updateAccountSuccessResponseTest()
-//  updateAccountOtherResponseTest()
-//  removeEmailFromAccountSuccessResponseTest()
-//  removeEmailFromAccountOtherResponseTest()
-//  removeEmailFromAccountFailureResponseTest()
+  createPaymentMethodSuccessResponseTest()
+  createPaymentMethodFailureResponseTest()
+  updatePaymentMethodSuccessResponseTest()
+  updatePaymentMethodOtherResponseTest()
+  updatePaymentMethodFailureResponseTest()
+  deletePaymentMethodSuccessResponseTest()
+  deletePaymentMethodOtherResponseTest()
+  deletePaymentMethodFailureResponseTest()
 }
