@@ -43,6 +43,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetTags(offset, limit, auditLevel) =>
@@ -197,7 +198,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
     import SprayJsonSupport._
     import TagJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[List[TagResult[Tag]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[TagResult[Tag]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/$resourcePathPrefix/$objectId/tags?audit=$auditLevel&includedDeleted=$includedDeleted") ~> addHeaders(headers)
@@ -211,7 +212,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
   }
 
   def createObjectTag(originalSender: ActorRef, objectId: UUID, tagDefinitionId: UUID, resourcePathPrefix: String) = {
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/$resourcePathPrefix/$objectId/tags?tagList=$tagDefinitionId") ~> addHeaders(headers)
@@ -232,7 +233,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
   }
 
   def deleteObjectTag(originalSender: ActorRef, objectId: UUID, tagDefinitionId: UUID, resourcePathPrefix: String) = {
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/$resourcePathPrefix/$objectId/tags?tagList=$tagDefinitionId") ~> addHeaders(headers)
@@ -258,7 +259,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
     import SprayJsonSupport._
     import TagJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[List[TagResult[Tag]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[TagResult[Tag]]]
 
     var suffixUrl = ""
     if (!objectType.equalsIgnoreCase("")) {
@@ -282,7 +283,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
     import SprayJsonSupport._
     import TagJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[List[TagResult[Tag]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[TagResult[Tag]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/tags/search/$searchKey?offset=$offset&limit=$limit&audit=$auditLevel") ~> addHeaders(headers)
@@ -301,7 +302,7 @@ case class TagActor(killBillUrl: String, headers: List[HttpHeader]) extends Acto
     import SprayJsonSupport._
     import TagJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[List[TagResult[Tag]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[TagResult[Tag]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/tags/pagination?offset=$offset&limit=$limit&audit=$auditLevel") ~> addHeaders(headers)

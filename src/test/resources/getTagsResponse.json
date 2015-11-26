@@ -1,0 +1,16 @@
+[
+  {
+    "tagId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "objectType": "ACCOUNT",
+    "objectId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "tagDefinitionId": "b17298d2-37fc-4701-8b9d-92ab1d15f01c",
+    "tagDefinitionName": "tagDefinitionName"
+  },
+  {
+    "tagId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "objectType": "ACCOUNT",
+    "objectId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "tagDefinitionId": "b17298d2-37fc-4701-8b9d-92ab1d15f012",
+    "tagDefinitionName": "tagDefinitionName2"
+  }
+]
