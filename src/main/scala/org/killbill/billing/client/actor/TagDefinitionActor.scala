@@ -29,6 +29,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case GetTagDefinitions(auditLevel) => {
@@ -57,7 +58,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
     import SprayJsonSupport._
     import TagDefinitionJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[List[TagDefinitionResult[TagDefinition]]]
+    val pipeline = sendAndReceive ~> unmarshal[List[TagDefinitionResult[TagDefinition]]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/tagDefinitions?audit=$auditLevel") ~> addHeaders(headers)
@@ -76,7 +77,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
     import SprayJsonSupport._
     import TagDefinitionJsonProtocol._
 
-    val pipeline = sendReceive ~> unmarshal[TagDefinitionResult[TagDefinition]]
+    val pipeline = sendAndReceive ~> unmarshal[TagDefinitionResult[TagDefinition]]
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/tagDefinitions/$tagDefinitionId?audit=$auditLevel") ~> addHeaders(headers)
@@ -96,7 +97,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
     import SprayJsonSupport._
     import TagDefinitionJsonProtocol._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/tagDefinitions", tagDefinition) ~> addHeaders(headers)
@@ -119,7 +120,7 @@ class TagDefinitionActor(killBillUrl: String, headers: List[HttpHeader]) extends
   def deleteTagDefinition(originalSender: ActorRef, tagDefinitionId: UUID) = {
     log.info("Deleting Tag Definition with ID: " + tagDefinitionId.toString)
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/tagDefinitions/$tagDefinitionId") ~> addHeaders(headers)
