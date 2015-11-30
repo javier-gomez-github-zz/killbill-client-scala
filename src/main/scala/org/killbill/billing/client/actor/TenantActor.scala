@@ -30,6 +30,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   val parent = context.parent
   import system.dispatcher
   val log = Logging(system, getClass)
+  def sendAndReceive = sendReceive
 
   def receive = {
     case CreateTenant(tenant) =>
@@ -57,7 +58,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def unRegisterPluginConfigurationForTenant(originalSender: ActorRef, pluginName: String) = {
     log.info("Unregistering Plugin Configuration for Tenant...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/tenants/uploadPluginConfig/$pluginName") ~> addHeaders(headers)
@@ -73,7 +74,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def getPluginConfigurationForTenant(originalSender: ActorRef, pluginName: String) = {
     log.info("Getting Plugin Configuration for Tenant...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/tenants/uploadPluginConfig/$pluginName") ~> addHeaders(headers)
@@ -89,7 +90,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def registerPluginConfigurationForTenant(originalSender: ActorRef, pluginName: String, pluginConfig: String) = {
     log.info("Registering Plugin Configuration For Tenant...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/tenants/uploadPluginConfig/$pluginName", pluginConfig) ~> addHeaders(headers)
@@ -112,7 +113,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def unRegisterCallbackNotificationForTenant(originalSender: ActorRef) = {
     log.info("Unregistering Callback Notification for Tenant...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Delete(killBillUrl+s"/tenants/registerNotificationCallback") ~> addHeaders(headers)
@@ -128,7 +129,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def getCallbackNotificationForTenant(originalSender: ActorRef) = {
     log.info("Getting Callback Notification for Tenant...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Get(killBillUrl+s"/tenants/registerNotificationCallback") ~> addHeaders(headers)
@@ -144,7 +145,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
   def registerCallbackNotificationForTenant(originalSender: ActorRef, callback: String) = {
     log.info("Registering Callback Notification For Tenant...")
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/tenants/registerNotificationCallback?cb=$callback") ~> addHeaders(headers)
@@ -170,7 +171,7 @@ case class TenantActor(killBillUrl: String, headers: List[HttpHeader]) extends A
     import SprayJsonSupport._
     import TenantJsonProtocol._
 
-    val pipeline = sendReceive
+    val pipeline = sendAndReceive
 
     val responseFuture = pipeline {
       Post(killBillUrl+s"/tenants", tenant) ~> addHeaders(headers)
