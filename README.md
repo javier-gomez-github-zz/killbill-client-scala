@@ -1,5 +1,6 @@
 killbill-client-scala
 ====================
+[![Coverage Status](https://coveralls.io/repos/jgomez-vp/killbill-client-scala/badge.svg?branch=master&service=github)](https://coveralls.io/github/jgomez-vp/killbill-client-scala?branch=master)
 Scala client library for Kill Bill developed using Scala native code and the Spray / Akka frameworks
 
 Usage
