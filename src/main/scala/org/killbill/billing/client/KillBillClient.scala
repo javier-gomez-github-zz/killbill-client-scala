@@ -35,6 +35,8 @@ import scala.concurrent.{Await, Future}
  */
 class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializable with scala.Product]) {
 
+  // $COVERAGE-OFF$
+
   // create the system, log and other shared features
   val system = ActorSystem("killbill-api-scala-client")
   val log = Logging(system, getClass)
@@ -729,4 +731,6 @@ class KillBillClient(killBillUrl: String, headers: List[HttpHeader with Serializ
     val future: Future[Any] = ask(accountActor, GetAccountTimeline(accountId, auditLevel)).mapTo[Any]
     Await.result(future, timeout.duration)
   }
+
+  // $COVERAGE-ON$
 }
