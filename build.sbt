@@ -30,3 +30,7 @@ libraryDependencies ++= {
 exportJars := true
 
 jacoco.settings
+
+import org.scoverage.coveralls.Imports.CoverallsKeys._
+
+coverallsToken := Some("vocfsvVrn9iYaVtqbq7u8KiJruS7F3Muh")
