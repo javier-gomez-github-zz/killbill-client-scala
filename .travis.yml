@@ -1,7 +1,9 @@
 language: scala
 scala:
    - 2.11.7
-   
-script: sbt clean compile
 
-install: sbt clean compile
+jdk:
+  - oraclejdk8
+
+script:
+   - sbt ++$TRAVIS_SCALA_VERSION test
